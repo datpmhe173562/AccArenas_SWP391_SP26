@@ -1,6 +1,8 @@
 using System;
+using AccArenas.Api.Domain.Interfaces;
 using AccArenas.Api.Domain.Models;
 using AccArenas.Api.Infrastructure.Data;
+using AccArenas.Api.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -21,6 +23,22 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString);
     options.UseOpenIddict();
 });
+
+// Repository Pattern & Unit of Work
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+// Register specific repositories
+builder.Services.AddScoped<IBannerRepository, BannerRepository>();
+builder.Services.AddScoped<IBlogPostRepository, BlogPostRepository>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<IFeedbackRepository, FeedbackRepository>();
+builder.Services.AddScoped<IGameAccountRepository, GameAccountRepository>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IPromotionRepository, PromotionRepository>();
+builder.Services.AddScoped<ISliderRepository, SliderRepository>();
+
+// Register generic repository for any additional entities
+builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
 // Identity
 builder
