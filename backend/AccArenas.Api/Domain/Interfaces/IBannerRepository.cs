@@ -1,7 +1,7 @@
-using AccArenas.Api.Domain.Models;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using AccArenas.Api.Domain.Models;
 
 namespace AccArenas.Api.Domain.Interfaces
 {
