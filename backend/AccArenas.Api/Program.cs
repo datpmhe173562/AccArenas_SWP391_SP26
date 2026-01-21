@@ -1,11 +1,16 @@
 using System;
+using System.Text;
+using AccArenas.Api.Application.Exceptions;
+using AccArenas.Api.Application.Services;
 using AccArenas.Api.Domain.Interfaces;
 using AccArenas.Api.Domain.Models;
 using AccArenas.Api.Infrastructure.Data;
 using AccArenas.Api.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using OpenIddict.Abstractions;
 using OpenIddict.Validation.AspNetCore;
 
@@ -40,19 +45,63 @@ builder.Services.AddScoped<ISliderRepository, SliderRepository>();
 // Register generic repository for any additional entities
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
+// JWT Service
+builder.Services.AddScoped<IJwtService, JwtService>();
+
+// JWT Authentication Configuration
+var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+var secretKey =
+    jwtSettings["SecretKey"] ?? "AccArenas-Super-Secret-Key-For-JWT-Token-Generation-2026";
+
+builder
+    .Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.RequireHttpsMetadata = false; // Set to true in production
+        options.SaveToken = true;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
+            ValidateIssuer = true,
+            ValidIssuer = jwtSettings["Issuer"] ?? "AccArenas",
+            ValidateAudience = true,
+            ValidAudience = jwtSettings["Audience"] ?? "AccArenas-Users",
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero,
+        };
+    });
+
 // Identity
 builder
-    .Services.AddIdentityCore<ApplicationUser>(options =>
+    .Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
     {
         options.Password.RequireDigit = true;
         options.Password.RequireUppercase = false;
         options.Password.RequireNonAlphanumeric = false;
         options.Password.RequiredLength = 6;
+
+        // Lockout settings
+        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+        options.Lockout.MaxFailedAccessAttempts = 5;
+        options.Lockout.AllowedForNewUsers = true;
+
+        // User settings
+        options.User.AllowedUserNameCharacters =
+            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
+        options.User.RequireUniqueEmail = true;
+
+        // SignIn settings
+        options.SignIn.RequireConfirmedEmail = false; // Set to true when email service is implemented
+        options.SignIn.RequireConfirmedPhoneNumber = false;
     })
-    .AddRoles<ApplicationRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddDefaultTokenProviders()
-    .AddSignInManager<SignInManager<ApplicationUser>>();
+    .AddDefaultTokenProviders();
 
 // OpenIddict (Identity Server)
 builder
@@ -84,6 +133,9 @@ builder.Services.AddAuthentication(options =>
 });
 
 var app = builder.Build();
+
+// Global exception handling middleware
+app.UseGlobalExceptionHandling();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
