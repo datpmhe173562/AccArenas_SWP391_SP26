@@ -51,9 +51,6 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(Program));
 
-// Mapping Service
-builder.Services.AddScoped<IMappingService, MappingService>();
-
 // JWT Authentication Configuration
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey =

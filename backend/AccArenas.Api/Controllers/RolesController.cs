@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AccArenas.Api.Application.DTOs;
 using AccArenas.Api.Application.Services;
 using AccArenas.Api.Domain.Models;
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -19,17 +20,17 @@ namespace AccArenas.Api.Controllers
     {
         private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly IMappingService _mappingService;
+        private readonly IMapper _mapper;
 
         public RolesController(
             RoleManager<ApplicationRole> roleManager,
             UserManager<ApplicationUser> userManager,
-            IMappingService mappingService
+            IMapper mapper
         )
         {
             _roleManager = roleManager;
             _userManager = userManager;
-            _mappingService = mappingService;
+            _mapper = mapper;
         }
 
         [HttpGet]
