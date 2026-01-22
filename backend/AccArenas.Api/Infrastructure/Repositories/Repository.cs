@@ -1,15 +1,16 @@
-using AccArenas.Api.Domain.Interfaces;
-using AccArenas.Api.Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using AccArenas.Api.Domain.Interfaces;
+using AccArenas.Api.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace AccArenas.Api.Infrastructure.Repositories
 {
-    public class Repository<T> : IRepository<T> where T : class
+    public class Repository<T> : IRepository<T>
+        where T : class
     {
         protected readonly ApplicationDbContext _context;
         protected readonly DbSet<T> _dbSet;
@@ -42,7 +43,8 @@ namespace AccArenas.Api.Infrastructure.Repositories
 
         public virtual async Task<IEnumerable<TResult>> GetSelectAsync<TResult>(
             Expression<Func<T, bool>>? predicate = null,
-            Expression<Func<T, TResult>>? selector = null)
+            Expression<Func<T, TResult>>? selector = null
+        )
         {
             IQueryable<T> query = _dbSet;
 
@@ -56,11 +58,12 @@ namespace AccArenas.Api.Infrastructure.Repositories
         }
 
         public virtual async Task<(IEnumerable<T> Items, int TotalCount)> GetPagedAsync(
-            int pageNumber, 
-            int pageSize, 
+            int pageNumber,
+            int pageSize,
             Expression<Func<T, bool>>? predicate = null,
             Expression<Func<T, object>>? orderBy = null,
-            bool orderByDescending = false)
+            bool orderByDescending = false
+        )
         {
             IQueryable<T> query = _dbSet;
 
@@ -71,15 +74,12 @@ namespace AccArenas.Api.Infrastructure.Repositories
 
             if (orderBy != null)
             {
-                query = orderByDescending 
-                    ? query.OrderByDescending(orderBy) 
+                query = orderByDescending
+                    ? query.OrderByDescending(orderBy)
                     : query.OrderBy(orderBy);
             }
 
-            var items = await query
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
+            var items = await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
 
             return (items, totalCount);
         }
@@ -123,8 +123,8 @@ namespace AccArenas.Api.Infrastructure.Repositories
 
         public virtual async Task<int> CountAsync(Expression<Func<T, bool>>? predicate = null)
         {
-            return predicate == null 
-                ? await _dbSet.CountAsync() 
+            return predicate == null
+                ? await _dbSet.CountAsync()
                 : await _dbSet.CountAsync(predicate);
         }
     }

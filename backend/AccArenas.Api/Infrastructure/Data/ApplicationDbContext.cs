@@ -19,6 +19,7 @@ namespace AccArenas.Api.Infrastructure.Data
         public DbSet<Slider> Sliders => Set<Slider>();
         public DbSet<Category> Categories => Set<Category>();
         public DbSet<Feedback> Feedbacks => Set<Feedback>();
+        public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
