@@ -104,7 +104,17 @@ namespace AccArenas.Api.Controllers
                 return NotFound($"User with ID {id} not found");
             }
 
-            var userDto = await _mappingService.ToDto(user, _userManager);
+            var roles = await _userManager.GetRolesAsync(user);
+            var userDto = new UserDto
+            {
+                Id = user.Id,
+                UserName = user.UserName,
+                Email = user.Email,
+                FullName = user.FullName,
+                IsActive = user.IsActive,
+                CreatedAt = user.CreatedAt,
+                Roles = roles
+            };
 
             return Ok(userDto);
         }
@@ -131,7 +141,7 @@ namespace AccArenas.Api.Controllers
                 return BadRequest("Email already exists");
             }
 
-            var user = _mappingService.ToEntity(request);
+            var user = _mapper.Map<ApplicationUser>(request);
 
             var result = await _userManager.CreateAsync(user, request.Password);
 
@@ -159,7 +169,17 @@ namespace AccArenas.Api.Controllers
                 }
             }
 
-            var userDto = await _mappingService.ToDto(user, _userManager);
+            var roles = await _userManager.GetRolesAsync(user);
+            var userDto = new UserDto
+            {
+                Id = user.Id,
+                UserName = user.UserName,
+                Email = user.Email,
+                FullName = user.FullName,
+                IsActive = user.IsActive,
+                CreatedAt = user.CreatedAt,
+                Roles = roles
+            };
 
             return CreatedAtAction(nameof(GetUser), new { id = user.Id }, userDto);
         }
@@ -178,7 +198,7 @@ namespace AccArenas.Api.Controllers
                 return NotFound($"User with ID {id} not found");
             }
 
-            _mappingService.UpdateEntity(user, request);
+            _mapper.Map(request, user);
 
             var result = await _userManager.UpdateAsync(user);
 
