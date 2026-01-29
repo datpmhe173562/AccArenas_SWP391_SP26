@@ -57,7 +57,7 @@ namespace AccArenas.Api.Controllers
                 .Take(pageSize)
                 .ToListAsync();
 
-            var rolesDto = _mappingService.ToDto(roles);
+            var rolesDto = _mapper.Map<IEnumerable<RoleDto>>(roles);
 
             return Ok(
                 new
@@ -80,7 +80,7 @@ namespace AccArenas.Api.Controllers
                 return NotFound($"Role with ID {id} not found");
             }
 
-            var roleDto = _mappingService.ToDto(role);
+            var roleDto = _mapper.Map<RoleDto>(role);
 
             return Ok(roleDto);
         }
@@ -100,7 +100,7 @@ namespace AccArenas.Api.Controllers
                 return BadRequest("Role with this name already exists");
             }
 
-            var role = _mappingService.ToEntity(request);
+            var role = _mapper.Map<ApplicationRole>(request);
 
             var result = await _roleManager.CreateAsync(role);
 
@@ -109,7 +109,7 @@ namespace AccArenas.Api.Controllers
                 return BadRequest(result.Errors);
             }
 
-            var roleDto = _mappingService.ToDto(role);
+            var roleDto = _mapper.Map<RoleDto>(role);
 
             return CreatedAtAction(nameof(GetRole), new { id = role.Id }, roleDto);
         }
@@ -128,7 +128,7 @@ namespace AccArenas.Api.Controllers
                 return NotFound($"Role with ID {id} not found");
             }
 
-            _mappingService.UpdateEntity(role, request);
+            _mapper.Map(request, role);
 
             var result = await _roleManager.UpdateAsync(role);
 
@@ -185,7 +185,21 @@ namespace AccArenas.Api.Controllers
             }
 
             var users = await _userManager.GetUsersInRoleAsync(role.Name!);
-            var usersDto = await _mappingService.ToDto(users, _userManager);
+            var usersDto = new List<UserDto>();
+            foreach (var user in users)
+            {
+                var roles = await _userManager.GetRolesAsync(user);
+                usersDto.Add(new UserDto
+                {
+                    Id = user.Id,
+                    UserName = user.UserName,
+                    Email = user.Email,
+                    FullName = user.FullName,
+                    IsActive = user.IsActive,
+                    CreatedAt = user.CreatedAt,
+                    Roles = roles
+                });
+            }
 
             return Ok(usersDto);
         }
