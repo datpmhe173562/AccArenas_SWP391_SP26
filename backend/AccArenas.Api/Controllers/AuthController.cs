@@ -190,10 +190,13 @@ namespace AccArenas.Api.Controllers
         /// Đăng xuất khỏi hệ thống
         /// </summary>
         [HttpPost("logout")]
-        [Authorize]
         public async Task<ActionResult<AuthResponse>> Logout()
         {
-            await _signInManager.SignOutAsync();
+            // Nếu user đã đăng nhập, sign out
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                await _signInManager.SignOutAsync();
+            }
 
             return Ok(
                 new AuthResponse { Success = true, Message = ExceptionMessages.LOGOUT_SUCCESS }

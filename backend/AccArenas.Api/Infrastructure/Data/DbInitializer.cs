@@ -25,8 +25,9 @@ namespace AccArenas.Api.Infrastructure.Data
             // Seed roles if they don't exist
             await SeedRolesAsync(roleManager);
 
-            // Optionally seed an admin user
+            // Seed users
             await SeedAdminUserAsync(userManager);
+            await SeedTestUsersAsync(userManager);
         }
 
         private static async Task SeedRolesAsync(RoleManager<ApplicationRole> roleManager)
@@ -86,6 +87,55 @@ namespace AccArenas.Api.Infrastructure.Data
                 if (result.Succeeded)
                 {
                     await userManager.AddToRoleAsync(adminUser, "Admin");
+                }
+            }
+        }
+
+        private static async Task SeedTestUsersAsync(UserManager<ApplicationUser> userManager)
+        {
+            // Customer test user
+            var customerEmail = "customer@test.com";
+            var customerUser = await userManager.FindByEmailAsync(customerEmail);
+            if (customerUser == null)
+            {
+                customerUser = new ApplicationUser
+                {
+                    Id = Guid.NewGuid(),
+                    UserName = "customer",
+                    Email = customerEmail,
+                    EmailConfirmed = true,
+                    FullName = "Test Customer",
+                    CreatedAt = DateTime.UtcNow,
+                    IsActive = true,
+                };
+
+                var result = await userManager.CreateAsync(customerUser, "Test@123");
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(customerUser, "Customer");
+                }
+            }
+
+            // Simple test user
+            var testEmail = "test@test.com";
+            var testUser = await userManager.FindByEmailAsync(testEmail);
+            if (testUser == null)
+            {
+                testUser = new ApplicationUser
+                {
+                    Id = Guid.NewGuid(),
+                    UserName = "test",
+                    Email = testEmail,
+                    EmailConfirmed = true,
+                    FullName = "Test User",
+                    CreatedAt = DateTime.UtcNow,
+                    IsActive = true,
+                };
+
+                var result = await userManager.CreateAsync(testUser, "Test@123");
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(testUser, "Customer");
                 }
             }
         }
