@@ -8,6 +8,7 @@ export default function Layout({ children, user }) {
     return (
         <div className="layout">
             <Header user={user} onMenuClick={() => setMenuOpen(!menuOpen)} />
+            {/* <div style={{ background: 'red', padding: '10px' }}>HEADER TEMPORARILY DISABLED</div> */}
             <main className="layout-main">
                 {children}
             </main>

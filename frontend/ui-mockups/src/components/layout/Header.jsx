@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import { UserCircleIcon, Bars3Icon } from '@heroicons/react/24/outline';
 import './Header.css';
 
 export default function Header({ user, onMenuClick }) {
@@ -8,7 +7,7 @@ export default function Header({ user, onMenuClick }) {
             <div className="header-container">
                 <div className="header-left">
                     <button className="menu-button md:hidden" onClick={onMenuClick}>
-                        <Bars3Icon className="w-6 h-6" />
+                        <span className="menu-icon">Menu</span>
                     </button>
                     <Link to="/" className="header-logo">
                         <span className="logo-text">AccArenas</span>
@@ -33,7 +32,7 @@ export default function Header({ user, onMenuClick }) {
 
                 {user && (
                     <div className="header-user">
-                        <UserCircleIcon className="w-8 h-8 text-gray-600" />
+                        <span className="user-icon">User</span>
                         <span className="user-name">{user.name}</span>
                     </div>
                 )}
