@@ -1,0 +1,16 @@
+{
+  "generatorName": "typescript-fetch",
+  "inputSpec": "https://localhost:7171/swagger/v1/swagger.json",
+  "output": "src/types-openapi/api",
+  "skipValidateSpec": true,
+  "additionalProperties": {
+    "typescriptThreePlus": true,
+    "withInterfaces": true,
+    "supportsES6": true,
+    "enumPropertyNaming": "UPPERCASE",
+    "modelPropertyNaming": "original"
+  },
+  "globalProperties": {
+    "lineEnding": "LF"
+  }
+}
