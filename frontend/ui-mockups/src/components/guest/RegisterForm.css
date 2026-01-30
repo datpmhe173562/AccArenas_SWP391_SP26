@@ -1,0 +1,59 @@
+.register-container {
+    min-height: calc(100vh - 200px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-lg);
+}
+
+.register-card {
+    width: 100%;
+    max-width: 500px;
+}
+
+.register-header {
+    text-align: center;
+    margin-bottom: var(--spacing-xl);
+}
+
+.register-title {
+    font-size: var(--font-size-3xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-gray-900);
+    margin-bottom: var(--spacing-sm);
+}
+
+.register-subtitle {
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-600);
+    line-height: var(--line-height-relaxed);
+}
+
+.register-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.checkbox-group input[type="checkbox"] {
+    width: 1rem;
+    height: 1rem;
+    cursor: pointer;
+}
+
+.checkbox-group label {
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-700);
+}
+
+.login-link {
+    text-align: center;
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-600);
+}

@@ -1,0 +1,7 @@
+#,Feature,System Function,Description
+1,User Management,Email Verification Service,"Automated delivery of verification codes for registration (UC-01) and password resets (UC-03)."
+2,Order Processing,Payment Gateway Integration,"Backend communication with online payment providers to confirm transaction status (UC-10)."
+3,Product Delivery,Credential Delivery Service,"Automated delivery of game account login credentials to customers via email (UC-11)."
+4,Order Management,Staff Assignment Logic,"Automatic assignment of new orders to available sales staff for monitoring (UC-14)."
+5,Analytics,Financial Report Engine,"Aggregation of transactional data to generate system-wide financial and revenue reports (UC-29)."
+6,Marketing,Promotion Activation Job,"Scheduled background tasks to activate or deactivate promotions and vouchers based on dates (UC-21)."

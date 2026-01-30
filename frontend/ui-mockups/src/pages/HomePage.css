@@ -1,0 +1,103 @@
+.home-page {
+    padding: var(--spacing-xl) 0;
+}
+
+.home-header {
+    text-align: center;
+    margin-bottom: var(--spacing-3xl);
+}
+
+.home-title {
+    font-size: var(--font-size-4xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-gray-900);
+    margin-bottom: var(--spacing-md);
+    background: linear-gradient(135deg, var(--color-primary) 0%, #3B82F6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.home-subtitle {
+    font-size: var(--font-size-lg);
+    color: var(--color-gray-600);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.use-cases-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-xl);
+}
+
+@media (min-width: 1024px) {
+    .use-cases-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.category-card {
+    height: 100%;
+}
+
+.category-title {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-gray-900);
+    margin: 0;
+}
+
+.use-case-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.use-case-item {
+    display: flex;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    transition: all var(--transition-fast);
+    border: 1px solid var(--color-gray-200);
+}
+
+.use-case-item:hover {
+    background-color: var(--color-primary-light);
+    border-color: var(--color-primary);
+    transform: translateX(4px);
+    text-decoration: none;
+}
+
+.use-case-id {
+    flex-shrink: 0;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-primary);
+    color: white;
+    border-radius: var(--radius-md);
+    font-weight: var(--font-weight-bold);
+    font-size: var(--font-size-sm);
+}
+
+.use-case-content {
+    flex: 1;
+}
+
+.use-case-name {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-gray-900);
+    margin: 0 0 var(--spacing-xs) 0;
+}
+
+.use-case-description {
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-600);
+    margin: 0;
+}

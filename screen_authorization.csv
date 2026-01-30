@@ -1,0 +1,23 @@
+Screen,Guest,Customer,Sales Staff,Marketing Staff,Admin
+Home Page,X,X,X,X,X
+Game Account Listings,X,X,X,X,X
+Query All Accounts,X,X,X,X,X
+View Promotions,X,X,X,X,X
+Login Page,X,X,X,X,X
+Register Account,X,,,,
+Forgot Password,X,X,,,
+Profile Management,,X,X,X,X
+Update Profile,,X,X,X,X
+Order History,,X,,,
+Checkout/Payment,,X,,,
+Sales Dashboard,,,X,,
+View Assigned Orders,,,X,,
+Update Order Status,,,X,,
+Marketing Dashboard,,,,X,
+Manage Listings,,,,X,
+Manage Promotions,,,,X,
+Manage Blogs/Banners,,,,X,
+Admin Dashboard,,,,,X
+Manage Users/Roles,,,,,X
+View Financial Reports,,,,,X
+Configure Settings,,,,,X
