@@ -1,11 +1,48 @@
-import { AuthResponse, LoginRequest, RegisterRequest } from '@/types/auth';
+import { AuthResponse, LoginRequest, RegisterRequest } from '@/types/generated-api';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://localhost:7171/api';
 
-class ApiError extends Error {
+export class ApiError extends Error {
   constructor(public status: number, message: string, public errors?: Record<string, string>) {
     super(message);
     this.name = 'ApiError';
+  }
+}
+
+// Token management utilities
+export class TokenManager {
+  private static ACCESS_TOKEN_KEY = 'access_token';
+  private static REFRESH_TOKEN_KEY = 'refresh_token';
+
+  static getAccessToken(): string | null {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem(this.ACCESS_TOKEN_KEY);
+  }
+
+  static setAccessToken(token: string): void {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(this.ACCESS_TOKEN_KEY, token);
+  }
+
+  static getRefreshToken(): string | null {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem(this.REFRESH_TOKEN_KEY);
+  }
+
+  static setRefreshToken(token: string): void {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(this.REFRESH_TOKEN_KEY, token);
+  }
+
+  static clearTokens(): void {
+    if (typeof window === 'undefined') return;
+    localStorage.removeItem(this.ACCESS_TOKEN_KEY);
+    localStorage.removeItem(this.REFRESH_TOKEN_KEY);
+  }
+
+  static setTokens(accessToken: string, refreshToken: string): void {
+    this.setAccessToken(accessToken);
+    this.setRefreshToken(refreshToken);
   }
 }
 
@@ -21,7 +58,7 @@ class AuthService {
     };
 
     // Add auth token if available
-    const token = localStorage.getItem('accessToken');
+    const token = TokenManager.getAccessToken();
     if (token) {
       config.headers = {
         ...config.headers,
@@ -57,9 +94,9 @@ class AuthService {
 
     // Store tokens if login successful
     if (response.success && response.accessToken) {
-      localStorage.setItem('accessToken', response.accessToken);
+      TokenManager.setAccessToken(response.accessToken);
       if (response.refreshToken) {
-        localStorage.setItem('refreshToken', response.refreshToken);
+        TokenManager.setRefreshToken(response.refreshToken);
       }
       if (response.user) {
         localStorage.setItem('user', JSON.stringify(response.user));
@@ -76,12 +113,11 @@ class AuthService {
     });
   }
 
-  async logout(): Promise<AuthResponse> {
+  async logout(): Promise<void> {
     try {
-      const response = await this.request<AuthResponse>('/auth/logout', {
+      await this.request('/auth/logout', {
         method: 'POST',
       });
-      return response;
     } finally {
       // Clear storage regardless of API response
       this.clearStorage();
@@ -89,7 +125,7 @@ class AuthService {
   }
 
   async refreshToken(): Promise<AuthResponse> {
-    const refreshToken = localStorage.getItem('refreshToken');
+    const refreshToken = TokenManager.getRefreshToken();
     if (!refreshToken) {
       throw new Error('No refresh token available');
     }
@@ -101,9 +137,9 @@ class AuthService {
 
     // Update tokens
     if (response.success && response.accessToken) {
-      localStorage.setItem('accessToken', response.accessToken);
+      TokenManager.setAccessToken(response.accessToken);
       if (response.refreshToken) {
-        localStorage.setItem('refreshToken', response.refreshToken);
+        TokenManager.setRefreshToken(response.refreshToken);
       }
     }
 
@@ -111,8 +147,7 @@ class AuthService {
   }
 
   clearStorage(): void {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
+    TokenManager.clearTokens();
     localStorage.removeItem('user');
   }
 
@@ -122,13 +157,12 @@ class AuthService {
   }
 
   getStoredToken(): string | null {
-    return localStorage.getItem('accessToken');
+    return TokenManager.getAccessToken();
   }
 
   getStoredRefreshToken(): string | null {
-    return localStorage.getItem('refreshToken');
+    return TokenManager.getRefreshToken();
   }
 }
 
 export const authService = new AuthService();
-export { ApiError };
