@@ -6,9 +6,16 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "types:generate": "node scripts/generate-types.js",
+    "types:generate-from-cs": "node scripts/generate-types-from-cs.js",
+    "types:watch": "nodemon --watch ../backend --ext cs,json --exec npm run types:generate-from-cs",
+    "postinstall": "npm run types:generate-from-cs"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.90.20",
+    "@tanstack/react-query-devtools": "^5.91.3",
+    "axios": "^1.13.4",
     "next": "16.1.2",
     "react": "19.2.3",
     "react-dom": "19.2.3"
