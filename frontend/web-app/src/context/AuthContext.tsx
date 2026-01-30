@@ -1,8 +1,36 @@
-'use client';
+"use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { AuthContextType, AuthState, LoginRequest, RegisterRequest, UserInfo } from '@/types/auth';
-import { authService, ApiError } from '@/services/auth';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
+import {
+  AuthResponse,
+  LoginRequest,
+  RegisterRequest,
+  UserInfo,
+} from "@/types/generated-api";
+import { authService, ApiError } from "@/services/auth";
+
+// Auth state interface
+interface AuthState {
+  user: UserInfo | null;
+  accessToken: string | null;
+  refreshToken: string | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+}
+
+// Auth context type
+interface AuthContextType extends AuthState {
+  login: (credentials: LoginRequest) => Promise<void>;
+  register: (userData: RegisterRequest) => Promise<void>;
+  logout: () => Promise<void>;
+  refreshAuthToken: () => Promise<void>;
+}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -36,12 +64,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             isLoading: false,
           });
         } else {
-          setState(prev => ({ ...prev, isLoading: false }));
+          setState((prev) => ({ ...prev, isLoading: false }));
         }
       } catch (error) {
-        console.error('Error initializing auth:', error);
+        console.error("Error initializing auth:", error);
         authService.clearStorage();
-        setState(prev => ({ ...prev, isLoading: false }));
+        setState((prev) => ({ ...prev, isLoading: false }));
       }
     };
 
@@ -50,10 +78,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const login = async (credentials: LoginRequest): Promise<void> => {
     try {
-      setState(prev => ({ ...prev, isLoading: true }));
-      
+      setState((prev) => ({ ...prev, isLoading: true }));
+
       const response = await authService.login(credentials);
-      
+
       if (response.success && response.user && response.accessToken) {
         setState({
           user: response.user,
@@ -63,25 +91,25 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           isLoading: false,
         });
       } else {
-        throw new Error(response.message || 'Đăng nhập thất bại');
+        throw new Error(response.message || "Đăng nhập thất bại");
       }
     } catch (error) {
-      setState(prev => ({ ...prev, isLoading: false }));
+      setState((prev) => ({ ...prev, isLoading: false }));
       throw error;
     }
   };
 
   const register = async (userData: RegisterRequest): Promise<void> => {
     try {
-      setState(prev => ({ ...prev, isLoading: true }));
-      
+      setState((prev) => ({ ...prev, isLoading: true }));
+
       const response = await authService.register(userData);
-      
+
       if (response.success) {
         // Registration successful, but user may need to log in separately
         // depending on backend implementation
-        setState(prev => ({ ...prev, isLoading: false }));
-        
+        setState((prev) => ({ ...prev, isLoading: false }));
+
         // If backend returns user data with tokens, auto-login
         if (response.user && response.accessToken) {
           setState({
@@ -93,10 +121,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           });
         }
       } else {
-        throw new Error(response.message || 'Đăng ký thất bại');
+        throw new Error(response.message || "Đăng ký thất bại");
       }
     } catch (error) {
-      setState(prev => ({ ...prev, isLoading: false }));
+      setState((prev) => ({ ...prev, isLoading: false }));
       throw error;
     }
   };
@@ -105,7 +133,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       await authService.logout();
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error("Logout error:", error);
       // Continue with logout even if API call fails
     } finally {
       setState({
@@ -121,18 +149,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const refreshAuth = async (): Promise<void> => {
     try {
       const response = await authService.refreshToken();
-      
+
       if (response.success && response.accessToken) {
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
-          accessToken: response.accessToken,
+          accessToken: response.accessToken || null,
           refreshToken: response.refreshToken || prev.refreshToken,
         }));
       } else {
-        throw new Error('Token refresh failed');
+        throw new Error("Token refresh failed");
       }
     } catch (error) {
-      console.error('Token refresh error:', error);
+      console.error("Token refresh error:", error);
       // If refresh fails, logout user
       await logout();
       throw error;
@@ -144,7 +172,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     login,
     register,
     logout,
-    refreshAuth,
+    refreshAuthToken: refreshAuth,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -153,7 +181,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };

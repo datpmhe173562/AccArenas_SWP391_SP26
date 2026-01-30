@@ -1,9 +1,11 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
+import { useLogout } from "@/hooks/useAuth";
 
 export default function Navigation() {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+  const { logout, loading: logoutLoading } = useLogout();
 
   const handleLogout = async () => {
     try {
@@ -39,9 +41,10 @@ export default function Navigation() {
                 )}
                 <button
                   onClick={handleLogout}
-                  className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-md text-sm font-medium"
+                  disabled={logoutLoading}
+                  className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-md text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Đăng xuất
+                  {logoutLoading ? "Đang đăng xuất..." : "Đăng xuất"}
                 </button>
               </>
             ) : (

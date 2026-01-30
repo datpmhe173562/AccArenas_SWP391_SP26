@@ -2,12 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
-import { RegisterRequest } from "@/types/auth";
-import { ApiError } from "@/services/auth";
+import { RegisterRequest } from "@/types/generated-api";
+import { useRegister } from "@/hooks/useAuth";
 
 export default function RegisterPage() {
-  const { register, isLoading } = useAuth();
+  const { register, loading, error: registerError, reset } = useRegister();
   const router = useRouter();
   const [formData, setFormData] = useState<RegisterRequest>({
     userName: "",
@@ -71,6 +70,7 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError("");
+    reset(); // Reset previous errors
 
     if (!validateForm()) {
       return;
@@ -81,15 +81,8 @@ export default function RegisterPage() {
       // Registration successful, redirect to login
       router.push("/auth/login?message=register_success");
     } catch (error) {
-      if (error instanceof ApiError) {
-        if (error.errors && Object.keys(error.errors).length > 0) {
-          setErrors(error.errors);
-        } else {
-          setSubmitError(error.message);
-        }
-      } else {
-        setSubmitError("Có lỗi xảy ra. Vui lòng thử lại.");
-      }
+      // Error is already handled by the hook
+      setSubmitError(registerError || "Có lỗi xảy ra. Vui lòng thử lại.");
     }
   };
 
@@ -257,10 +250,10 @@ export default function RegisterPage() {
           <div>
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={loading}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? (
+              {loading ? (
                 <span className="flex items-center">
                   <svg
                     className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
