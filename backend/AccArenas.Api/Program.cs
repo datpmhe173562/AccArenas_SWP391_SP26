@@ -105,10 +105,11 @@ builder
 builder
     .Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
     {
-        options.Password.RequireDigit = true;
+        options.Password.RequireDigit = false;
         options.Password.RequireUppercase = false;
         options.Password.RequireNonAlphanumeric = false;
         options.Password.RequiredLength = 6;
+        options.Password.RequireLowercase = false;
 
         // Lockout settings
         options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
