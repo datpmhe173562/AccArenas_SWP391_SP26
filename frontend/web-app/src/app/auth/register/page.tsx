@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { RegisterRequest } from "@/types/generated-api";
 import { useRegister } from "@/hooks/useAuth";
+import { showSuccess, showError, showValidationErrors } from "@/lib/sweetalert";
 
 export default function RegisterPage() {
   const { register, loading, error: registerError, reset } = useRegister();
@@ -17,7 +18,6 @@ export default function RegisterPage() {
     phoneNumber: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [submitError, setSubmitError] = useState<string>("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -64,12 +64,17 @@ export default function RegisterPage() {
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+
+    if (Object.keys(newErrors).length > 0) {
+      showValidationErrors(newErrors);
+      return false;
+    }
+
+    return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitError("");
     reset(); // Reset previous errors
 
     if (!validateForm()) {
@@ -78,11 +83,18 @@ export default function RegisterPage() {
 
     try {
       await register(formData);
-      // Registration successful, redirect to login
-      router.push("/auth/login?message=register_success");
+      showSuccess(
+        "Tài khoản của bạn đã được tạo thành công! Vui lòng đăng nhập.",
+        "Đăng ký thành công!",
+      );
+      setTimeout(() => {
+        router.push("/auth/login");
+      }, 1500);
     } catch (error) {
-      // Error is already handled by the hook
-      setSubmitError(registerError || "Có lỗi xảy ra. Vui lòng thử lại.");
+      showError(
+        registerError || "Đăng ký thất bại. Vui lòng thử lại.",
+        "Đăng ký thất bại",
+      );
     }
   };
 
@@ -240,12 +252,6 @@ export default function RegisterPage() {
               )}
             </div>
           </div>
-
-          {submitError && (
-            <div className="rounded-md bg-red-50 p-4">
-              <p className="text-sm text-red-800">{submitError}</p>
-            </div>
-          )}
 
           <div>
             <button

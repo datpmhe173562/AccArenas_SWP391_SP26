@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LoginRequest } from "@/types/generated-api";
 import { useLogin } from "@/hooks/useAuth";
+import { showSuccess, showError, showValidationErrors } from "@/lib/sweetalert";
 
 export default function LoginPage() {
   const { login, loading, error: loginError, reset } = useLogin();
@@ -14,7 +15,6 @@ export default function LoginPage() {
     rememberMe: false,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [submitError, setSubmitError] = useState<string>("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -43,12 +43,17 @@ export default function LoginPage() {
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+
+    if (Object.keys(newErrors).length > 0) {
+      showValidationErrors(newErrors);
+      return false;
+    }
+
+    return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitError("");
     reset(); // Reset previous errors
 
     if (!validateForm()) {
@@ -57,10 +62,15 @@ export default function LoginPage() {
 
     try {
       await login(formData);
-      router.push("/dashboard"); // Redirect to dashboard after successful login
+      showSuccess("Đăng nhập thành công!", "Chào mừng trở lại!");
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 1000);
     } catch (error) {
-      // Error is already handled by the hook
-      setSubmitError(loginError || "Có lỗi xảy ra. Vui lòng thử lại.");
+      showError(
+        loginError || "Tên đăng nhập hoặc mật khẩu không đúng",
+        "Đăng nhập thất bại",
+      );
     }
   };
 
@@ -152,12 +162,6 @@ export default function LoginPage() {
               </a>
             </div>
           </div>
-
-          {submitError && (
-            <div className="rounded-md bg-red-50 p-4">
-              <p className="text-sm text-red-800">{submitError}</p>
-            </div>
-          )}
 
           <div>
             <button

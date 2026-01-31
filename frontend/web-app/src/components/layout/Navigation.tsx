@@ -2,6 +2,7 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { useLogout } from "@/hooks/useAuth";
+import { showSuccess, showError } from "@/lib/sweetalert";
 
 export default function Navigation() {
   const { user, isAuthenticated } = useAuth();
@@ -10,8 +11,10 @@ export default function Navigation() {
   const handleLogout = async () => {
     try {
       await logout();
+      showSuccess("Đăng xuất thành công!");
     } catch (error) {
       console.error("Logout error:", error);
+      showError("Không thể đăng xuất. Vui lòng thử lại!");
     }
   };
 
