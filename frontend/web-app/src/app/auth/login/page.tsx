@@ -64,7 +64,7 @@ export default function LoginPage() {
       await login(formData);
       showSuccess("Đăng nhập thành công!", "Chào mừng trở lại!");
       setTimeout(() => {
-        router.push("/dashboard");
+        router.push("/admin");
       }, 1000);
     } catch (error) {
       showError(

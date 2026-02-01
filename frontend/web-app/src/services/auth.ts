@@ -48,7 +48,12 @@ export class TokenManager {
 
 class AuthService {
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
-    const url = `${API_BASE_URL}${endpoint}`;
+    let baseUrl = API_BASE_URL;
+    if (!baseUrl.endsWith('/api') && !baseUrl.includes('/api/')) {
+      baseUrl = `${baseUrl}/api`;
+    }
+    const url = `${baseUrl}${endpoint}`;
+    console.log('Sending request to:', url);
     const config: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
@@ -67,11 +72,11 @@ class AuthService {
     }
 
     const response = await fetch(url, config);
-    
+
     if (!response.ok) {
       let errorMessage = 'Có lỗi xảy ra';
       let errors: Record<string, string> = {};
-      
+
       try {
         const errorData = await response.json();
         errorMessage = errorData.message || errorMessage;
@@ -79,7 +84,7 @@ class AuthService {
       } catch (e) {
         // If response is not JSON, use default message
       }
-      
+
       throw new ApiError(response.status, errorMessage, errors);
     }
 

@@ -63,10 +63,10 @@ export default function Header() {
                   </span>
                 </span>
                 <Link
-                  href="/dashboard"
+                  href="/admin/users"
                   className="text-sm text-gray-700 hover:text-indigo-600 transition-colors"
                 >
-                  Dashboard
+                  Quản trị
                 </Link>
                 <button
                   onClick={() => logout.logout()}
