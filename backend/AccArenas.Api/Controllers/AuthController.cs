@@ -22,13 +22,15 @@ namespace AccArenas.Api.Controllers
         private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IJwtService _jwtService;
+        private readonly IEmailService _emailService;
 
         public AuthController(
             SignInManager<ApplicationUser> signInManager,
             UserManager<ApplicationUser> userManager,
             RoleManager<ApplicationRole> roleManager,
             IUnitOfWork unitOfWork,
-            IJwtService jwtService
+            IJwtService jwtService,
+            IEmailService emailService
         )
         {
             _signInManager = signInManager;
@@ -36,6 +38,7 @@ namespace AccArenas.Api.Controllers
             _roleManager = roleManager;
             _unitOfWork = unitOfWork;
             _jwtService = jwtService;
+            _emailService = emailService;
         }
 
         /// <summary>
@@ -292,7 +295,7 @@ namespace AccArenas.Api.Controllers
         }
 
         /// <summary>
-        /// Quên mật khẩu - Gửi email reset
+        /// Quên mật khẩu - Gửi email với mật khẩu mới
         /// </summary>
         [HttpPost("forgot-password")]
         public async Task<ActionResult<AuthResponse>> ForgotPassword(ForgotPasswordRequest request)
@@ -319,10 +322,33 @@ namespace AccArenas.Api.Controllers
                 );
             }
 
-            var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+            // Tạo mật khẩu mới ngẫu nhiên
+            var newPassword = GenerateRandomPassword();
 
-            // TODO: Tích hợp service gửi email
-            // await _emailService.SendPasswordResetEmailAsync(user.Email, resetToken);
+            // Reset mật khẩu
+            var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var result = await _userManager.ResetPasswordAsync(user, resetToken, newPassword);
+
+            if (!result.Succeeded)
+            {
+                var errors = result.Errors.ToDictionary(e => e.Code, e => e.Description);
+                throw ExceptionMessages.BadRequest(ExceptionMessages.PASSWORD_RESET_FAILED, errors);
+            }
+
+            // Gửi email với mật khẩu mới
+            try
+            {
+                await _emailService.SendPasswordResetEmailAsync(
+                    user.Email!,
+                    user.UserName!,
+                    newPassword
+                );
+            }
+            catch (Exception ex)
+            {
+                // Log error nhưng vẫn trả về success để không tiết lộ thông tin
+                Console.WriteLine($"Failed to send email: {ex.Message}");
+            }
 
             return Ok(
                 new AuthResponse
@@ -330,6 +356,18 @@ namespace AccArenas.Api.Controllers
                     Success = true,
                     Message = ExceptionMessages.PASSWORD_RESET_EMAIL_SENT,
                 }
+            );
+        }
+
+        /// <summary>
+        /// Tạo mật khẩu ngẫu nhiên
+        /// </summary>
+        private string GenerateRandomPassword()
+        {
+            const string chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            var random = new Random();
+            return new string(
+                Enumerable.Repeat(chars, 8).Select(s => s[random.Next(s.Length)]).ToArray()
             );
         }
 

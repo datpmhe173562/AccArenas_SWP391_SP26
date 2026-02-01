@@ -69,6 +69,9 @@ builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 // JWT Service
 builder.Services.AddScoped<IJwtService, JwtService>();
 
+// Email Service
+builder.Services.AddScoped<IEmailService, EmailService>();
+
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(Program));
 
