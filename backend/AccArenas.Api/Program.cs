@@ -101,6 +101,9 @@ builder
             ValidAudience = jwtSettings["Audience"] ?? "AccArenas-Users",
             ValidateLifetime = true,
             ClockSkew = TimeSpan.Zero,
+            // Map Microsoft's long claim names to short names
+            RoleClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role",
+            NameClaimType = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"
         };
     });
 

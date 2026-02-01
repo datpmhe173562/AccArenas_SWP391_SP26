@@ -1,12 +1,10 @@
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import HomeRedirect from "@/components/auth/HomeRedirect";
 import Link from "next/link";
 
 export default function Home() {
   return (
     <>
-      <HomeRedirect />
       <Header />
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
         {/* Hero Section */}

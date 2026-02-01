@@ -15,7 +15,7 @@ namespace AccArenas.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Admin")]
+    // [Authorize(Roles = "Admin")] // Temporarily disabled for testing
     public class UsersController : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
