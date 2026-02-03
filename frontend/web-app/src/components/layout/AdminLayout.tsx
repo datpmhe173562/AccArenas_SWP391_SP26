@@ -17,8 +17,9 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
+  { label: "Tổng quan", href: "/admin" },
   { label: "Quản lý người dùng", href: "/admin/users" },
-  { label: "Cấu hình hệ thống", href: "/admin/settings" },
+  { label: "Quản lý Role", href: "/admin/roles" },
 ];
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
@@ -38,14 +39,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         {/* Logo */}
         <div className="flex items-center justify-between p-4 border-b">
           <Link href="/" className="flex items-center space-x-2">
-            <span className="text-2xl">🎮</span>
             <span className="text-xl font-bold text-indigo-600">AccArenas</span>
           </Link>
           <button
             onClick={() => setSidebarOpen(false)}
             className="lg:hidden text-gray-500 hover:text-gray-700"
           >
-            ✕
+            ×
           </button>
         </div>
 

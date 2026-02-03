@@ -4,7 +4,7 @@ export default function ProductsPage() {
   return (
     <AdminLayout>
       <div className="bg-white rounded-lg shadow p-8 text-center">
-        <div className="text-6xl mb-4">🎮</div>
+        <div className="mb-4"></div>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
           Quản lý Sản phẩm
         </h1>

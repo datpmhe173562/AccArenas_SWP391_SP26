@@ -22,7 +22,7 @@ export default function AdminDashboard() {
                 <p className="text-sm text-gray-600">Tổng người dùng</p>
                 <p className="text-2xl font-bold text-gray-900 mt-1">--</p>
               </div>
-              <div className="text-4xl">👥</div>
+              <div></div>
             </div>
           </div>
 
@@ -32,7 +32,7 @@ export default function AdminDashboard() {
                 <p className="text-sm text-gray-600">Sản phẩm</p>
                 <p className="text-2xl font-bold text-gray-900 mt-1">--</p>
               </div>
-              <div className="text-4xl">🎮</div>
+              <div></div>
             </div>
           </div>
 
@@ -42,7 +42,7 @@ export default function AdminDashboard() {
                 <p className="text-sm text-gray-600">Đơn hàng</p>
                 <p className="text-2xl font-bold text-gray-900 mt-1">--</p>
               </div>
-              <div className="text-4xl">📦</div>
+              <div></div>
             </div>
           </div>
 
@@ -52,7 +52,7 @@ export default function AdminDashboard() {
                 <p className="text-sm text-gray-600">Doanh thu</p>
                 <p className="text-2xl font-bold text-gray-900 mt-1">--</p>
               </div>
-              <div className="text-4xl">💰</div>
+              <div></div>
             </div>
           </div>
         </div>
@@ -67,7 +67,7 @@ export default function AdminDashboard() {
               href="/admin/users"
               className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:border-indigo-500 hover:bg-indigo-50 transition-colors"
             >
-              <span className="text-2xl">👥</span>
+              <span></span>
               <div>
                 <p className="font-medium text-gray-900">Quản lý người dùng</p>
                 <p className="text-sm text-gray-500">Xem và quản lý users</p>
@@ -78,7 +78,7 @@ export default function AdminDashboard() {
               href="/admin/products"
               className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:border-indigo-500 hover:bg-indigo-50 transition-colors"
             >
-              <span className="text-2xl">🎮</span>
+              <span></span>
               <div>
                 <p className="font-medium text-gray-900">Quản lý sản phẩm</p>
                 <p className="text-sm text-gray-500">Thêm/sửa game accounts</p>
@@ -89,7 +89,7 @@ export default function AdminDashboard() {
               href="/admin/promotions"
               className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:border-indigo-500 hover:bg-indigo-50 transition-colors"
             >
-              <span className="text-2xl">🎁</span>
+              <span></span>
               <div>
                 <p className="font-medium text-gray-900">Quản lý khuyến mãi</p>
                 <p className="text-sm text-gray-500">Tạo và quản lý voucher</p>

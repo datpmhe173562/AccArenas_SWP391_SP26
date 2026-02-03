@@ -51,7 +51,7 @@ export default function Home() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="relative p-8 bg-gradient-to-br from-indigo-50 to-white rounded-2xl shadow-lg hover:shadow-xl transition-shadow">
-                <div className="text-4xl mb-4">🛡️</div>
+                <div className="text-4xl mb-4"></div>
                 <h3 className="text-xl font-bold text-gray-900 mb-3">
                   An toàn & Bảo mật
                 </h3>
