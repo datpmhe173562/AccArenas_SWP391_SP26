@@ -8,7 +8,7 @@ export interface AuthResponse {
   accessToken?: string | undefined;
   refreshToken?: string | undefined;
   expiresAt?: string | undefined;
-  user?: userinfo?;
+  user?: UserInfo | undefined;
   errors: string[];
 }
 
