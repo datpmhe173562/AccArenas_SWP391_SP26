@@ -21,16 +21,19 @@ namespace AccArenas.Api.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly IMapper _mapper;
+        private readonly ILogger<UsersController> _logger;
 
         public UsersController(
             UserManager<ApplicationUser> userManager,
             RoleManager<ApplicationRole> roleManager,
-            IMapper mapper
+            IMapper mapper,
+            ILogger<UsersController> logger
         )
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _mapper = mapper;
+            _logger = logger;
         }
 
         [HttpGet]
@@ -122,8 +125,11 @@ namespace AccArenas.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<UserDto>> CreateUser(CreateUserRequest request)
         {
+            _logger.LogInformation("[CreateUser] Starting user creation for username: {UserName}", request.UserName);
+            
             if (!ModelState.IsValid)
             {
+                _logger.LogWarning("[CreateUser] Invalid model state");
                 return BadRequest(ModelState);
             }
 
@@ -131,6 +137,7 @@ namespace AccArenas.Api.Controllers
             var existingUser = await _userManager.FindByNameAsync(request.UserName);
             if (existingUser != null)
             {
+                _logger.LogWarning("[CreateUser] Username {UserName} already exists", request.UserName);
                 return BadRequest("Username already exists");
             }
 
@@ -138,17 +145,22 @@ namespace AccArenas.Api.Controllers
             var existingEmail = await _userManager.FindByEmailAsync(request.Email);
             if (existingEmail != null)
             {
+                _logger.LogWarning("[CreateUser] Email {Email} already exists", request.Email);
                 return BadRequest("Email already exists");
             }
 
             var user = _mapper.Map<ApplicationUser>(request);
+            _logger.LogInformation("[CreateUser] Creating user with password");
 
             var result = await _userManager.CreateAsync(user, request.Password);
 
             if (!result.Succeeded)
             {
+                _logger.LogError("[CreateUser] Failed to create user: {Errors}", string.Join(", ", result.Errors.Select(e => e.Description)));
                 return BadRequest(result.Errors);
             }
+
+            _logger.LogInformation("[CreateUser] User created successfully with ID: {UserId}", user.Id);
 
             // Assign roles if provided
             if (request.Roles.Any())
@@ -161,11 +173,16 @@ namespace AccArenas.Api.Controllers
                     {
                         validRoles.Add(roleName);
                     }
+                    else
+                    {
+                        _logger.LogWarning("[CreateUser] Role {RoleName} does not exist", roleName);
+                    }
                 }
 
                 if (validRoles.Any())
                 {
                     await _userManager.AddToRolesAsync(user, validRoles);
+                    _logger.LogInformation("[CreateUser] Assigned roles: {Roles}", string.Join(", ", validRoles));
                 }
             }
 
@@ -181,32 +198,58 @@ namespace AccArenas.Api.Controllers
                 Roles = roles
             };
 
+            _logger.LogInformation("[CreateUser] User creation completed for {UserName}", user.UserName);
             return CreatedAtAction(nameof(GetUser), new { id = user.Id }, userDto);
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateUser(Guid id, UpdateUserRequest request)
         {
+            _logger.LogInformation("[UpdateUser] Starting user update for ID: {UserId}", id);
+            
             if (!ModelState.IsValid)
             {
+                _logger.LogWarning("[UpdateUser] Invalid model state");
                 return BadRequest(ModelState);
             }
 
             var user = await _userManager.FindByIdAsync(id.ToString());
             if (user == null)
             {
+                _logger.LogWarning("[UpdateUser] User with ID {UserId} not found", id);
                 return NotFound($"User with ID {id} not found");
             }
 
+            _logger.LogInformation("[UpdateUser] Updating user {UserName}", user.UserName);
             _mapper.Map(request, user);
 
             var result = await _userManager.UpdateAsync(user);
 
             if (!result.Succeeded)
             {
+                _logger.LogError("[UpdateUser] Failed to update user: {Errors}", string.Join(", ", result.Errors.Select(e => e.Description)));
                 return BadRequest(result.Errors);
             }
 
+            // Update password if provided
+            if (!string.IsNullOrEmpty(request.Password))
+            {
+                _logger.LogInformation("[UpdateUser] Updating password for user {UserName}", user.UserName);
+                
+                // Remove old password and set new one
+                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                var passwordResult = await _userManager.ResetPasswordAsync(user, token, request.Password);
+                
+                if (!passwordResult.Succeeded)
+                {
+                    _logger.LogError("[UpdateUser] Failed to update password: {Errors}", string.Join(", ", passwordResult.Errors.Select(e => e.Description)));
+                    return BadRequest(passwordResult.Errors);
+                }
+                
+                _logger.LogInformation("[UpdateUser] Password updated successfully");
+            }
+
+            _logger.LogInformation("[UpdateUser] User update completed for {UserName}", user.UserName);
             return NoContent();
         }
 

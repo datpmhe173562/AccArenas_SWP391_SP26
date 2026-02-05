@@ -24,31 +24,48 @@ function UpdateUserContent() {
   }, [userId]);
 
   const fetchUser = async () => {
+    console.log("[UpdateUser] Fetching user with ID:", userId);
     try {
       setLoading(true);
-      // TODO: Implement getUserById API
-      // Tạm thời lấy từ danh sách users
-      const response = await UserService.getAllUsers();
-      let users: UserDto[] = [];
+      
+      const response = await UserService.getUserById(userId!);
+      console.log("[UpdateUser] Raw API response:", response);
 
-      if (response.success && response.data) {
-        users = response.data || [];
-      } else if (Array.isArray(response)) {
-        users = response;
-      } else {
-        // @ts-ignore
-        users = response.data || response.items || [];
+      // Handle different response structures
+      let userData: UserDto | null = null;
+      
+      if (response && typeof response === 'object') {
+        // Check if response has a data property
+        if ('data' in response && response.data) {
+          userData = response.data as UserDto;
+        } 
+        // Check if response has success property
+        else if ('success' in response && response.success && 'data' in response) {
+          userData = response.data as UserDto;
+        }
+        // Response might be the user object directly
+        else if ('id' in response && 'userName' in response) {
+          userData = response as unknown as UserDto;
+        }
       }
 
-      const foundUser = users.find((u) => u.id === userId);
-      if (foundUser) {
-        setUser(foundUser);
+      console.log("[UpdateUser] Parsed user data:", userData);
+
+      if (userData) {
+        setUser(userData);
       } else {
-        console.error("User not found");
+        console.error("[UpdateUser] User not found in response");
+        alert("Không tìm thấy người dùng");
         router.push("/admin/users");
       }
-    } catch (error) {
-      console.error("Failed to fetch user", error);
+    } catch (error: any) {
+      console.error("[UpdateUser] Failed to fetch user:", error);
+      console.error("[UpdateUser] Error details:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+      alert(`Lỗi khi tải thông tin người dùng: ${error.message}`);
       router.push("/admin/users");
     } finally {
       setLoading(false);
@@ -59,21 +76,59 @@ function UpdateUserContent() {
     fullName: string;
     email: string;
     userName: string;
+    password?: string;
   }) => {
     if (!user) return;
 
     setIsSubmitting(true);
-    try {
-      // TODO: Implement updateUser API
-      console.log("Updating user:", { ...data, id: user.id });
+    console.log("[UpdateUser] Starting user update for ID:", user.id);
+    console.log("[UpdateUser] Update data:", {
+      ...data,
+      password: data.password ? "***" : undefined,
+    });
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      const updatePayload: any = {
+        userName: data.userName,
+        email: data.email,
+        fullName: data.fullName,
+        isActive: user.isActive,
+      };
+
+      // Only include password if provided
+      if (data.password && data.password.trim()) {
+        updatePayload.password = data.password;
+        console.log("[UpdateUser] Password will be updated");
+      }
+
+      console.log("[UpdateUser] Calling API with payload:", {
+        ...updatePayload,
+        password: updatePayload.password ? "***" : undefined,
+      });
+
+      await UserService.updateUser(user.id!, updatePayload);
+
+      console.log("[UpdateUser] User updated successfully");
 
       // Navigate back to users list
       router.push("/admin/users");
-    } catch (error) {
-      console.error("Error updating user:", error);
+    } catch (error: any) {
+      console.error("[UpdateUser] Error updating user:", error);
+      console.error("[UpdateUser] Error details:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+
+      // Show error to user
+      alert(
+        `Lỗi khi cập nhật người dùng: ${
+          error.response?.data?.message ||
+          error.response?.data ||
+          error.message ||
+          "Unknown error"
+        }`
+      );
     } finally {
       setIsSubmitting(false);
     }

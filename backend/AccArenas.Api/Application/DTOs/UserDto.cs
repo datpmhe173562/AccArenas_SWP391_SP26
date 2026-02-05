@@ -29,6 +29,7 @@ namespace AccArenas.Api.Application.DTOs
         public string? Email { get; set; }
         public string? FullName { get; set; }
         public bool IsActive { get; set; }
+        public string? Password { get; set; } // Optional - only update if provided
     }
 
     public class AssignRoleRequest

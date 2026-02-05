@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { UserForm } from "@/components/users";
+import { UserService } from "@/services/userService";
 
 export default function AddUserPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -13,19 +14,52 @@ export default function AddUserPage() {
     fullName: string;
     email: string;
     userName: string;
+    password?: string;
   }) => {
     setIsLoading(true);
-    try {
-      // TODO: Implement API call to create user
-      console.log("Creating user:", data);
+    console.log("[AddUser] Starting user creation with data:", {
+      ...data,
+      password: data.password ? "***" : undefined,
+    });
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      const createUserPayload = {
+        userName: data.userName,
+        email: data.email,
+        fullName: data.fullName,
+        password: data.password || "",
+        isActive: true,
+        roles: [] as string[], // Default to no roles, can be modified later
+      };
+
+      console.log("[AddUser] Calling API with payload:", {
+        ...createUserPayload,
+        password: "***",
+      });
+
+      const response = await UserService.createUser(createUserPayload);
+
+      console.log("[AddUser] User created successfully:", response);
 
       // Navigate back to users list
       router.push("/admin/users");
-    } catch (error) {
-      console.error("Error creating user:", error);
+    } catch (error: any) {
+      console.error("[AddUser] Error creating user:", error);
+      console.error("[AddUser] Error details:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+      
+      // Show error to user
+      alert(
+        `Lỗi khi tạo người dùng: ${
+          error.response?.data?.message ||
+          error.response?.data ||
+          error.message ||
+          "Unknown error"
+        }`
+      );
     } finally {
       setIsLoading(false);
     }
@@ -69,6 +103,7 @@ export default function AddUserPage() {
           isLoading={isLoading}
           submitButtonText="Thêm người dùng"
           title="Thông tin người dùng mới"
+          isCreating={true}
         />
       </div>
     </AdminLayout>
