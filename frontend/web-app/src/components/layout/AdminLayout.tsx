@@ -20,6 +20,7 @@ const menuItems: MenuItem[] = [
   { label: "Tổng quan", href: "/admin" },
   { label: "Quản lý người dùng", href: "/admin/users" },
   { label: "Quản lý Role", href: "/admin/roles" },
+  { label: "Gán quyền", href: "/admin/assign-role" },
 ];
 
 export default function AdminLayout({ children }: AdminLayoutProps) {

@@ -28,16 +28,8 @@ function UserDetailContent() {
       // TODO: Implement getUserById API
       // Tạm thời lấy từ danh sách users
       const response = await UserService.getAllUsers();
-      let users: UserDto[] = [];
-
-      if (response.success && response.data) {
-        users = response.data || [];
-      } else if (Array.isArray(response)) {
-        users = response;
-      } else {
-        // @ts-ignore
-        users = response.data || response.items || [];
-      }
+      // response is already UserDto[] due to getAllUsers implementation
+      const users: UserDto[] = Array.isArray(response) ? response : [];
 
       const foundUser = users.find((u) => u.id === userId);
       if (foundUser) {

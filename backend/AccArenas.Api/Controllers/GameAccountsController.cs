@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using AccArenas.Api.Domain.Interfaces;
 using AccArenas.Api.Domain.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AccArenas.Api.Controllers
@@ -68,6 +69,7 @@ namespace AccArenas.Api.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<GameAccount>> CreateGameAccount(GameAccount gameAccount)
         {
             if (!ModelState.IsValid)
@@ -120,6 +122,7 @@ namespace AccArenas.Api.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateGameAccount(Guid id, GameAccount gameAccount)
         {
             if (id != gameAccount.Id)
@@ -164,6 +167,7 @@ namespace AccArenas.Api.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteGameAccount(Guid id)
         {
             try

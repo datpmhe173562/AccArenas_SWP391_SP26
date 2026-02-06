@@ -1,7 +1,7 @@
 import { axiosInstance } from '@/lib/axios';
-import { 
-  UserDto, 
-  CreateUserRequest, 
+import {
+  UserDto,
+  CreateUserRequest,
   UpdateUserRequest,
   AssignRoleRequest,
   RemoveRoleRequest
@@ -9,18 +9,18 @@ import {
 import { ApiResponse, PaginatedResponse } from '@/types/generated-api';
 
 export const UserService = {
-  async getUsers(page = 1, pageSize = 10): Promise<ApiResponse<PaginatedResponse<UserDto>>> {
-    const res = await axiosInstance.get<ApiResponse<PaginatedResponse<UserDto>>>('/api/users', {
-      params: { page, pageSize }
+  async getUsers(page = 1, pageSize = 10, search = ''): Promise<any> {
+    const res = await axiosInstance.get<any>('/api/users', {
+      params: { page, pageSize, search }
     });
     return res.data;
   },
 
-  async getAllUsers(): Promise<ApiResponse<UserDto[]>> {
-    const res = await axiosInstance.get<ApiResponse<UserDto[]>>('/api/users', {
+  async getAllUsers(): Promise<UserDto[]> {
+    const res = await axiosInstance.get<any>('/api/users', {
       params: { pageSize: 1000 }
     });
-    return res.data;
+    return res.data.items || [];
   },
 
   async getUserById(id: string): Promise<ApiResponse<UserDto>> {
@@ -43,13 +43,15 @@ export const UserService = {
     return res.data;
   },
 
-  async assignRole(payload: AssignRoleRequest): Promise<ApiResponse<void>> {
-    const res = await axiosInstance.post<ApiResponse<void>>('/api/users/assign-role', payload);
-    return res.data;
+  async assignRole(payload: AssignRoleRequest): Promise<any> {
+    const res = await axiosInstance.post(`/api/users/${payload.userId}/roles`, payload);
+    return { success: true, message: res.data };
   },
 
-  async removeRole(payload: RemoveRoleRequest): Promise<ApiResponse<void>> {
-    const res = await axiosInstance.post<ApiResponse<void>>('/api/users/remove-role', payload);
-    return res.data;
+  async removeRole(payload: RemoveRoleRequest): Promise<any> {
+    await axiosInstance.delete(`/api/users/${payload.userId}/roles`, {
+      data: payload
+    });
+    return { success: true };
   },
 };

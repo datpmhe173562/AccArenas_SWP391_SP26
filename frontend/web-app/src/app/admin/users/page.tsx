@@ -28,14 +28,9 @@ export default function UsersPage() {
       setLoading(true);
       const response = await UserService.getAllUsers();
 
-      if (response.success && response.data) {
-        setUsers(response.data || []);
-      } else if (Array.isArray(response)) {
-        setUsers(response);
-      } else {
-        // @ts-ignore
-        setUsers(response.data || response.items || []);
-      }
+      // response is already UserDto[] due to getAllUsers implementation
+      const usersData: UserDto[] = Array.isArray(response) ? response : [];
+      setUsers(usersData);
     } catch (error) {
       console.error("Failed to fetch users", error);
     } finally {
