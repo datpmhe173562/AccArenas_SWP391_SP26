@@ -220,6 +220,121 @@ namespace AccArenas.Api.Infrastructure.Data
                     }
                 }
             }
+
+            // Marketing Staff user
+            var marketerEmail = "marketer@accarenas.com";
+            var marketerUser = await userManager.FindByEmailAsync(marketerEmail);
+            if (marketerUser == null)
+            {
+                marketerUser = new ApplicationUser
+                {
+                    Id = Guid.NewGuid(),
+                    UserName = marketerEmail,
+                    Email = marketerEmail,
+                    EmailConfirmed = true,
+                    FullName = "Nguyen Van Marketer",
+                    CreatedAt = DateTime.UtcNow.AddDays(-20),
+                    IsActive = true,
+                };
+
+                var result = await userManager.CreateAsync(marketerUser, "Marketer@123");
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(marketerUser, "MarketingStaff");
+                }
+            }
+
+            // Marketing Lead user
+            var marketerLeadEmail = "marketer.lead@accarenas.com";
+            var marketerLeadUser = await userManager.FindByEmailAsync(marketerLeadEmail);
+            if (marketerLeadUser == null)
+            {
+                marketerLeadUser = new ApplicationUser
+                {
+                    Id = Guid.NewGuid(),
+                    UserName = marketerLeadEmail,
+                    Email = marketerLeadEmail,
+                    EmailConfirmed = true,
+                    FullName = "Le Van Marketing Lead",
+                    CreatedAt = DateTime.UtcNow.AddDays(-25),
+                    IsActive = true,
+                };
+
+                var result = await userManager.CreateAsync(marketerLeadUser, "MarketerLead@123");
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(marketerLeadUser, "MarketingStaff");
+                }
+            }
+
+            // Sales Staff user
+            var salesEmail = "sale@accarenas.com";
+            var salesUser = await userManager.FindByEmailAsync(salesEmail);
+            if (salesUser == null)
+            {
+                salesUser = new ApplicationUser
+                {
+                    Id = Guid.NewGuid(),
+                    UserName = salesEmail,
+                    Email = salesEmail,
+                    EmailConfirmed = true,
+                    FullName = "Tran Thi Sale",
+                    CreatedAt = DateTime.UtcNow.AddDays(-15),
+                    IsActive = true,
+                };
+
+                var result = await userManager.CreateAsync(salesUser, "Sale@123");
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(salesUser, "SalesStaff");
+                }
+            }
+
+            // Sales Manager user
+            var salesManagerEmail = "sale.manager@accarenas.com";
+            var salesManagerUser = await userManager.FindByEmailAsync(salesManagerEmail);
+            if (salesManagerUser == null)
+            {
+                salesManagerUser = new ApplicationUser
+                {
+                    Id = Guid.NewGuid(),
+                    UserName = salesManagerEmail,
+                    Email = salesManagerEmail,
+                    EmailConfirmed = true,
+                    FullName = "Pham Thi Sale Manager",
+                    CreatedAt = DateTime.UtcNow.AddDays(-30),
+                    IsActive = false, // Inactive user for testing
+                };
+
+                var result = await userManager.CreateAsync(salesManagerUser, "SaleManager@123");
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(salesManagerUser, "SalesStaff");
+                }
+            }
+
+            // Additional test user with username-only format
+            var usernameOnlyEmail = "trongytb2@gmail.com";
+            var usernameOnlyUser = await userManager.FindByEmailAsync(usernameOnlyEmail);
+            if (usernameOnlyUser == null)
+            {
+                usernameOnlyUser = new ApplicationUser
+                {
+                    Id = Guid.NewGuid(),
+                    UserName = "trongytb2",
+                    Email = usernameOnlyEmail,
+                    EmailConfirmed = true,
+                    FullName = "Trong Do",
+                    CreatedAt = DateTime.UtcNow.AddDays(-5),
+                    IsActive = true,
+                };
+
+                var result = await userManager.CreateAsync(usernameOnlyUser, "Trong@123");
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(usernameOnlyUser, "Customer");
+                }
+            }
         }
 
         private static async Task SeedCategoriesAsync(ApplicationDbContext context, ILogger logger)
@@ -388,121 +503,6 @@ namespace AccArenas.Api.Infrastructure.Data
                     await context.GameAccounts.AddRangeAsync(gameAccounts);
                     await context.SaveChangesAsync();
                     logger.LogInformation($"Created {gameAccounts.Length} game accounts");
-                }
-            }
-
-            // Marketing Staff user
-            var marketerEmail = "marketer@accarenas.com";
-            var marketerUser = await userManager.FindByEmailAsync(marketerEmail);
-            if (marketerUser == null)
-            {
-                marketerUser = new ApplicationUser
-                {
-                    Id = Guid.NewGuid(),
-                    UserName = marketerEmail,
-                    Email = marketerEmail,
-                    EmailConfirmed = true,
-                    FullName = "Nguyen Van Marketer",
-                    CreatedAt = DateTime.UtcNow.AddDays(-20),
-                    IsActive = true,
-                };
-
-                var result = await userManager.CreateAsync(marketerUser, "Marketer@123");
-                if (result.Succeeded)
-                {
-                    await userManager.AddToRoleAsync(marketerUser, "MarketingStaff");
-                }
-            }
-
-            // Marketing Lead user
-            var marketerLeadEmail = "marketer.lead@accarenas.com";
-            var marketerLeadUser = await userManager.FindByEmailAsync(marketerLeadEmail);
-            if (marketerLeadUser == null)
-            {
-                marketerLeadUser = new ApplicationUser
-                {
-                    Id = Guid.NewGuid(),
-                    UserName = marketerLeadEmail,
-                    Email = marketerLeadEmail,
-                    EmailConfirmed = true,
-                    FullName = "Le Van Marketing Lead",
-                    CreatedAt = DateTime.UtcNow.AddDays(-25),
-                    IsActive = true,
-                };
-
-                var result = await userManager.CreateAsync(marketerLeadUser, "MarketerLead@123");
-                if (result.Succeeded)
-                {
-                    await userManager.AddToRoleAsync(marketerLeadUser, "MarketingStaff");
-                }
-            }
-
-            // Sales Staff user
-            var salesEmail = "sale@accarenas.com";
-            var salesUser = await userManager.FindByEmailAsync(salesEmail);
-            if (salesUser == null)
-            {
-                salesUser = new ApplicationUser
-                {
-                    Id = Guid.NewGuid(),
-                    UserName = salesEmail,
-                    Email = salesEmail,
-                    EmailConfirmed = true,
-                    FullName = "Tran Thi Sale",
-                    CreatedAt = DateTime.UtcNow.AddDays(-15),
-                    IsActive = true,
-                };
-
-                var result = await userManager.CreateAsync(salesUser, "Sale@123");
-                if (result.Succeeded)
-                {
-                    await userManager.AddToRoleAsync(salesUser, "SalesStaff");
-                }
-            }
-
-            // Sales Manager user
-            var salesManagerEmail = "sale.manager@accarenas.com";
-            var salesManagerUser = await userManager.FindByEmailAsync(salesManagerEmail);
-            if (salesManagerUser == null)
-            {
-                salesManagerUser = new ApplicationUser
-                {
-                    Id = Guid.NewGuid(),
-                    UserName = salesManagerEmail,
-                    Email = salesManagerEmail,
-                    EmailConfirmed = true,
-                    FullName = "Pham Thi Sale Manager",
-                    CreatedAt = DateTime.UtcNow.AddDays(-30),
-                    IsActive = false, // Inactive user for testing
-                };
-
-                var result = await userManager.CreateAsync(salesManagerUser, "SaleManager@123");
-                if (result.Succeeded)
-                {
-                    await userManager.AddToRoleAsync(salesManagerUser, "SalesStaff");
-                }
-            }
-
-            // Additional test user with username-only format
-            var usernameOnlyEmail = "trongytb2@gmail.com";
-            var usernameOnlyUser = await userManager.FindByEmailAsync(usernameOnlyEmail);
-            if (usernameOnlyUser == null)
-            {
-                usernameOnlyUser = new ApplicationUser
-                {
-                    Id = Guid.NewGuid(),
-                    UserName = "trongytb2",
-                    Email = usernameOnlyEmail,
-                    EmailConfirmed = true,
-                    FullName = "Trong Do",
-                    CreatedAt = DateTime.UtcNow.AddDays(-5),
-                    IsActive = true,
-                };
-
-                var result = await userManager.CreateAsync(usernameOnlyUser, "Trong@123");
-                if (result.Succeeded)
-                {
-                    await userManager.AddToRoleAsync(usernameOnlyUser, "Customer");
                 }
             }
         }
