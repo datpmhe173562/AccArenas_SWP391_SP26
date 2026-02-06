@@ -20,10 +20,6 @@ const menuItems: MenuItem[] = [
   { label: "Tổng quan", href: "/admin" },
   { label: "Quản lý người dùng", href: "/admin/users" },
   { label: "Quản lý Role", href: "/admin/roles" },
-  { label: "Quản lý danh mục", href: "/admin/categories" },
-  { label: "Quản lý khuyến mãi", href: "/admin/promotions" },
-  { label: "Quản lý banners", href: "/admin/banners" },
-  { label: "Quản lý blogs", href: "/admin/blogs" },
   { label: "Gán quyền", href: "/admin/assign-role" },
 ];
 
