@@ -20,6 +20,10 @@ const menuItems: MenuItem[] = [
   { label: "Tổng quan", href: "/admin" },
   { label: "Quản lý người dùng", href: "/admin/users" },
   { label: "Quản lý Role", href: "/admin/roles" },
+  { label: "Quản lý danh mục", href: "/admin/categories" },
+  { label: "Quản lý khuyến mãi", href: "/admin/promotions" },
+  { label: "Quản lý banners", href: "/admin/banners" },
+  { label: "Quản lý blogs", href: "/admin/blogs" },
 ];
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
@@ -32,9 +36,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     <div className="min-h-screen bg-gray-100">
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 z-40 h-screen transition-transform ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } bg-white border-r border-gray-200 w-64`}
+        className={`fixed top-0 left-0 z-40 h-screen transition-transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          } bg-white border-r border-gray-200 w-64`}
       >
         {/* Logo */}
         <div className="flex items-center justify-between p-4 border-b">
@@ -57,11 +60,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                  isActive
+                className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${isActive
                     ? "bg-indigo-50 text-indigo-600 font-medium"
                     : "text-gray-700 hover:bg-gray-50"
-                }`}
+                  }`}
               >
                 <span className="text-sm">{item.label}</span>
                 {item.badge && (

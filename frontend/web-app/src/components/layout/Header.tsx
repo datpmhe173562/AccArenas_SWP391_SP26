@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { useLogout } from "@/hooks/useAuth";
+import { canAccessAdmin, canAccessMarketer, getManagementRoute, isAdmin } from "@/lib/roleUtils";
 
 export default function Header() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -62,12 +63,15 @@ export default function Header() {
                     {user?.userName || user?.email}
                   </span>
                 </span>
-                <Link
-                  href="/admin/users"
-                  className="text-sm text-gray-700 hover:text-indigo-600 transition-colors"
-                >
-                  Quản trị
-                </Link>
+
+                {(canAccessAdmin(user) || canAccessMarketer(user)) && (
+                  <Link
+                    href={getManagementRoute(user)}
+                    className="text-sm text-gray-700 hover:text-indigo-600 transition-colors"
+                  >
+                    {isAdmin(user) ? "Quản trị viên" : "Marketing"}
+                  </Link>
+                )}
                 <button
                   onClick={() => logout.logout()}
                   disabled={logout.loading}

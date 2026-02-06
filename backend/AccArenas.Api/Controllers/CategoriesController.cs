@@ -26,13 +26,13 @@ namespace AccArenas.Api.Controllers
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<CategoryDto>>> GetCategories(
-            [FromQuery] int pageNumber = 1,
+            [FromQuery] int page = 1,
             [FromQuery] int pageSize = 10,
             [FromQuery] bool? isActive = null
         )
         {
             var result = await _unitOfWork.Categories.GetPagedAsync(
-                pageNumber,
+                page,
                 pageSize,
                 predicate: isActive.HasValue ? c => c.IsActive == isActive.Value : null,
                 orderBy: c => c.Name
@@ -45,7 +45,7 @@ namespace AccArenas.Api.Controllers
                 {
                     Items = categoriesDto,
                     TotalCount = result.TotalCount,
-                    PageNumber = pageNumber,
+                    PageNumber = page,
                     PageSize = pageSize,
                 }
             );
