@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { LoginRequest, RegisterRequest } from '@/types/generated-api';
+import { LoginRequest, RegisterRequest, UserInfo } from '@/types/generated-api';
 import { useMutation, useAsyncOperation } from './useApi';
 
 // Hook for login functionality

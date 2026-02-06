@@ -157,11 +157,11 @@ builder
         options.UseAspNetCore();
     });
 
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme;
-});
+// builder.Services.AddAuthentication(options =>
+// {
+//     options.DefaultAuthenticateScheme = OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme;
+//     options.DefaultChallengeScheme = OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme;
+// });
 
 var app = builder.Build();
 

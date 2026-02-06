@@ -24,6 +24,7 @@ const menuItems: MenuItem[] = [
   { label: "Quản lý khuyến mãi", href: "/admin/promotions" },
   { label: "Quản lý banners", href: "/admin/banners" },
   { label: "Quản lý blogs", href: "/admin/blogs" },
+  { label: "Gán quyền", href: "/admin/assign-role" },
 ];
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
