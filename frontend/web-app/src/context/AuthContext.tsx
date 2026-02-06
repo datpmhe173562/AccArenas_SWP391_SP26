@@ -26,7 +26,7 @@ interface AuthState {
 
 // Auth context type
 interface AuthContextType extends AuthState {
-  login: (credentials: LoginRequest) => Promise<void>;
+  login: (credentials: LoginRequest) => Promise<UserInfo>;
   register: (userData: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
   refreshAuthToken: () => Promise<void>;
@@ -76,7 +76,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     initializeAuth();
   }, []);
 
-  const login = async (credentials: LoginRequest): Promise<void> => {
+  const login = async (credentials: LoginRequest): Promise<UserInfo> => {
     try {
       setState((prev) => ({ ...prev, isLoading: true }));
 
@@ -90,6 +90,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           isAuthenticated: true,
           isLoading: false,
         });
+
+        return response.user;
       } else {
         throw new Error(response.message || "Đăng nhập thất bại");
       }

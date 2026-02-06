@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LoginRequest } from "@/types/generated-api";
 import { useLogin } from "@/hooks/useAuth";
+import { getManagementRoute } from "@/lib/roleUtils";
 import { showSuccess, showError, showValidationErrors } from "@/lib/sweetalert";
 
 export default function LoginPage() {
@@ -61,10 +62,13 @@ export default function LoginPage() {
     }
 
     try {
-      await login(formData);
+      const userInfo = await login(formData);
       showSuccess("Đăng nhập thành công!", "Chào mừng trở lại!");
+
+      // Use user data from login response for immediate redirect
+      const redirectPath = getManagementRoute(userInfo) || "/";
       setTimeout(() => {
-        router.push("/admin");
+        router.push(redirectPath);
       }, 1000);
     } catch (error) {
       showError(

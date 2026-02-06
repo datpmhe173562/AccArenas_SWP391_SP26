@@ -6,7 +6,7 @@ import { useMutation, useAsyncOperation } from './useApi';
 // Hook for login functionality
 export function useLogin() {
   const { login } = useAuth();
-  const { loading, error, execute, reset } = useAsyncOperation<void>();
+  const { loading, error, execute, reset } = useAsyncOperation<UserInfo>();
 
   const handleLogin = useCallback(
     async (credentials: LoginRequest) => {
