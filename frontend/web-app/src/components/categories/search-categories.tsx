@@ -10,6 +10,7 @@ export const SearchCategories = () => {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [isActiveFilter, setIsActiveFilter] = useState<boolean | undefined>(undefined);
+  const [sortOrder, setSortOrder] = useState<string>("newest");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [page, setPage] = useState(1);
 
@@ -40,6 +41,7 @@ export const SearchCategories = () => {
   const handleReset = useCallback(() => {
     setSearchQuery("");
     setIsActiveFilter(undefined);
+    setSortOrder("newest");
     setPage(1);
   }, []);
 
@@ -69,7 +71,7 @@ export const SearchCategories = () => {
     router.push(`/marketer/categories/update/${category.id}`);
   };
 
-  const hasActiveFilters = searchQuery || isActiveFilter !== undefined;
+  const hasActiveFilters = searchQuery || isActiveFilter !== undefined || sortOrder !== "newest";
 
   // Filter categories based on search query and status
   const filteredCategories = (categoriesData?.items || []).filter((category: CategoryDto) => {
@@ -80,6 +82,13 @@ export const SearchCategories = () => {
     const matchesStatus = isActiveFilter === undefined || category.isActive === isActiveFilter;
     
     return matchesSearch && matchesStatus;
+  }).sort((a: CategoryDto, b: CategoryDto) => {
+    if (sortOrder === "name_asc") {
+      return a.name.localeCompare(b.name);
+    } else if (sortOrder === "name_desc") {
+      return b.name.localeCompare(a.name);
+    }
+    return 0; // Default order (as returned by API)
   });
 
   return (
@@ -112,9 +121,9 @@ export const SearchCategories = () => {
         </div>
 
         {/* Search Form */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Search Query */}
-          <div>
+          <div className="md:col-span-1">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Tìm kiếm
             </label>
@@ -185,6 +194,22 @@ export const SearchCategories = () => {
               <option value="false">Không hoạt động</option>
             </select>
           </div>
+
+          {/* Sort Order */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Sắp xếp
+            </label>
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              className="w-full py-2 px-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="newest">Mới nhất (Mặc định)</option>
+              <option value="name_asc">Tên (A-Z)</option>
+              <option value="name_desc">Tên (Z-A)</option>
+            </select>
+          </div>
         </div>
 
         {/* Active Filters Display */}
@@ -208,6 +233,17 @@ export const SearchCategories = () => {
                   <button
                     onClick={() => setIsActiveFilter(undefined)}
                     className="ml-2 text-yellow-600 hover:text-yellow-800"
+                  >
+                    ×
+                  </button>
+                </span>
+              )}
+              {sortOrder !== "newest" && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                  Sắp xếp: {sortOrder === "name_asc" ? "Tên (A-Z)" : "Tên (Z-A)"}
+                  <button
+                    onClick={() => setSortOrder("newest")}
+                    className="ml-2 text-purple-600 hover:text-purple-800"
                   >
                     ×
                   </button>

@@ -279,11 +279,13 @@ namespace AccArenas.Api.Controllers
                 throw new ApiException($"User with ID {id} not found", HttpStatusCode.NotFound);
             }
 
+            var roleExists = await _roleManager.RoleExistsAsync(request.RoleName);
             if (!roleExists)
             {
                 throw new ApiException("Role does not exist", HttpStatusCode.BadRequest);
             }
 
+            var isInRole = await _userManager.IsInRoleAsync(user, request.RoleName);
             if (isInRole)
             {
                 throw new ApiException("User already has this role", HttpStatusCode.BadRequest);
@@ -309,6 +311,7 @@ namespace AccArenas.Api.Controllers
                 throw new ApiException($"User with ID {id} not found", HttpStatusCode.NotFound);
             }
 
+            var isInRole = await _userManager.IsInRoleAsync(user, request.RoleName);
             if (!isInRole)
             {
                 throw new ApiException("User does not have this role", HttpStatusCode.BadRequest);

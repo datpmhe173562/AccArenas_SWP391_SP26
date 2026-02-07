@@ -36,7 +36,7 @@ export const useCategory = (id: string, enabled = true) => {
 // Create category mutation
 export const useCreateCategory = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (payload: CreateCategoryRequest) => categoryService.createCategory(payload),
     onSuccess: () => {
@@ -48,9 +48,9 @@ export const useCreateCategory = () => {
 // Update category mutation
 export const useUpdateCategory = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: UpdateCategoryRequest }) => 
+    mutationFn: ({ id, payload }: { id: string; payload: UpdateCategoryRequest }) =>
       categoryService.updateCategory(id, payload),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.categories] });
@@ -62,7 +62,7 @@ export const useUpdateCategory = () => {
 // Delete category mutation
 export const useDeleteCategory = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (id: string) => categoryService.deleteCategory(id),
     onSuccess: () => {
