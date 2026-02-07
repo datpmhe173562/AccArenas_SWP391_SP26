@@ -72,6 +72,11 @@ namespace AccArenas.Api.Infrastructure.Data
                     Name = "MarketingStaff",
                     Description = "Marketing staff managing content and promotions",
                 },
+                new ApplicationRole
+                {
+                    Name = "Moderator",
+                    Description = "Moderator managing content and user support",
+                },
             };
 
             foreach (var role in roles)
@@ -190,7 +195,18 @@ namespace AccArenas.Api.Infrastructure.Data
                     UserName = "marketing1",
                     FullName = "Marketing Staff One",
                     Password = "Test@123",
+                    FullName = "Marketing Staff One",
+                    Password = "Test@123",
                     Role = "MarketingStaff"
+                },
+                // Moderator
+                new
+                {
+                    Email = "mod@test.com",
+                    UserName = "moderator",
+                    FullName = "Moderator User",
+                    Password = "Test@123",
+                    Role = "Moderator"
                 },
             };
 

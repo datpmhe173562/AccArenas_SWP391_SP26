@@ -164,7 +164,7 @@ namespace AccArenas.Api.Controllers
             }
 
             // Prevent deletion of system roles
-            var systemRoles = new[] { "Admin", "Customer", "Staff" };
+            var systemRoles = new[] { "Admin", "Customer", "Staff", "Moderator" };
             if (systemRoles.Contains(role.Name))
             {
                 throw new ApiException("Cannot delete system roles", HttpStatusCode.BadRequest);
