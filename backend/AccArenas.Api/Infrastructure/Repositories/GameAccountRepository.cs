@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using AccArenas.Api.Domain.Interfaces;
 using AccArenas.Api.Domain.Models;
@@ -13,6 +14,13 @@ namespace AccArenas.Api.Infrastructure.Repositories
     {
         public GameAccountRepository(ApplicationDbContext context)
             : base(context) { }
+
+        public override async Task<GameAccount?> GetByIdAsync(Guid id)
+        {
+            return await _dbSet
+                .Include(g => g.Category)
+                .FirstOrDefaultAsync(g => g.Id == id);
+        }
 
         public async Task<IEnumerable<GameAccount>> GetAvailableAccountsAsync()
         {
@@ -51,6 +59,37 @@ namespace AccArenas.Api.Infrastructure.Repositories
                 .Include(g => g.Category)
                 .OrderBy(g => g.Price)
                 .ToListAsync();
+        }
+
+        public override async Task<(IEnumerable<GameAccount> Items, int TotalCount)> GetPagedAsync(
+            int pageNumber,
+            int pageSize,
+            Expression<Func<GameAccount, bool>>? predicate = null,
+            Expression<Func<GameAccount, object>>? orderBy = null,
+            bool orderByDescending = false
+        )
+        {
+            IQueryable<GameAccount> query = _dbSet.Include(g => g.Category);
+
+            if (predicate != null)
+                query = query.Where(predicate);
+
+            var totalCount = await query.CountAsync();
+
+            if (orderBy != null)
+            {
+                query = orderByDescending
+                    ? query.OrderByDescending(orderBy)
+                    : query.OrderBy(orderBy);
+            }
+            else
+            {
+                query = query.OrderByDescending(g => g.CreatedAt);
+            }
+
+            var items = await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
+
+            return (items, totalCount);
         }
 
         public async Task<GameAccount?> GetByAccountNameAsync(string accountName)

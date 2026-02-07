@@ -13,5 +13,6 @@ namespace AccArenas.Api.Domain.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public Guid CategoryId { get; set; }
         public Category? Category { get; set; }
+        public List<string> Images { get; set; } = new List<string>();
     }
 }

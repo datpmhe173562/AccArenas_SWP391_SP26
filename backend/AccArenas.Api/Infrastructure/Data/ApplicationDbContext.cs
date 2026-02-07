@@ -37,6 +37,13 @@ namespace AccArenas.Api.Infrastructure.Data
                 .WithMany()
                 .HasForeignKey(ga => ga.CategoryId);
 
+            builder.Entity<GameAccount>()
+                .Property(p => p.Images)
+                .HasConversion(
+                    v => System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions?)null),
+                    v => System.Text.Json.JsonSerializer.Deserialize<List<string>>(v, (System.Text.Json.JsonSerializerOptions?)null) ?? new List<string>()
+                );
+
             builder.Entity<GameAccount>().Property(p => p.Price).HasColumnType("decimal(18,2)");
 
             builder

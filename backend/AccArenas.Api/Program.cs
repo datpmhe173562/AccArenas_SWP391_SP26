@@ -72,6 +72,9 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 // Email Service
 builder.Services.AddScoped<IEmailService, EmailService>();
 
+// Mapping Service
+builder.Services.AddScoped<IMappingService, MappingService>();
+
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(Program));
 
@@ -107,61 +110,65 @@ builder
         };
     });
 
-// Identity
+// Identity Core (without cookies, we use JWT Bearer)
 builder
-    .Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
+    .Services.AddIdentityCore<ApplicationUser>(options =>
     {
         options.Password.RequireDigit = false;
         options.Password.RequireUppercase = false;
         options.Password.RequireNonAlphanumeric = false;
         options.Password.RequiredLength = 6;
-        options.Password.RequireLowercase = false;
-
-        // Lockout settings
-        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
-        options.Lockout.MaxFailedAccessAttempts = 5;
-        options.Lockout.AllowedForNewUsers = true;
-
-        // User settings
-        options.User.AllowedUserNameCharacters =
-            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
         options.User.RequireUniqueEmail = true;
-
-        // SignIn settings
-        options.SignIn.RequireConfirmedEmail = false; // Set to true when email service is implemented
-        options.SignIn.RequireConfirmedPhoneNumber = false;
+        options.SignIn.RequireConfirmedEmail = false;
     })
+    .AddRoles<ApplicationRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddSignInManager<SignInManager<ApplicationUser>>()
     .AddDefaultTokenProviders();
 
-// OpenIddict (Identity Server)
-builder
-    .Services.AddOpenIddict()
-    .AddCore(options =>
+// Configure Identity to NOT use cookies (we use JWT Bearer only)
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.Name = "AccArenas.Identity";
+    options.Events.OnRedirectToLogin = context =>
     {
-        options.UseEntityFrameworkCore().UseDbContext<ApplicationDbContext>();
-    })
-    .AddServer(options =>
+        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+        return Task.CompletedTask;
+    };
+    options.Events.OnRedirectToAccessDenied = context =>
     {
-        options.AllowPasswordFlow();
-        options.SetTokenEndpointUris("/connect/token");
-        options.AcceptAnonymousClients();
+        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+        return Task.CompletedTask;
+    };
+    // Disable cookie authentication completely for API
+    options.LoginPath = null;
+    options.LogoutPath = null;
+    options.AccessDeniedPath = null;
+});
 
-        options.AddDevelopmentEncryptionCertificate().AddDevelopmentSigningCertificate();
+// OpenIddict (Identity Server) - Commented out, using JWT Bearer instead
+// builder
+//     .Services.AddOpenIddict()
+//     .AddCore(options =>
+//     {
+//         options.UseEntityFrameworkCore().UseDbContext<ApplicationDbContext>();
+//     })
+//     .AddServer(options =>
+//     {
+//         options.AllowPasswordFlow();
+//         options.SetTokenEndpointUris("/connect/token");
+//         options.AcceptAnonymousClients();
+// 
+//         options.AddDevelopmentEncryptionCertificate().AddDevelopmentSigningCertificate();
+// 
+//         options.UseAspNetCore().EnableTokenEndpointPassthrough();
+//     })
+//     .AddValidation(options =>
+//     {
+//         options.UseLocalServer();
+//         options.UseAspNetCore();
+//     });
 
-        options.UseAspNetCore().EnableTokenEndpointPassthrough();
-    })
-    .AddValidation(options =>
-    {
-        options.UseLocalServer();
-        options.UseAspNetCore();
-    });
-
-// builder.Services.AddAuthentication(options =>
-// {
-//     options.DefaultAuthenticateScheme = OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme;
-//     options.DefaultChallengeScheme = OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme;
-// });
 
 var app = builder.Build();
 
@@ -179,6 +186,8 @@ if (app.Environment.IsDevelopment())
 app.UseCors("AllowFrontend");
 
 app.UseHttpsRedirection();
+
+app.UseStaticFiles();
 
 app.UseAuthentication();
 app.UseAuthorization();

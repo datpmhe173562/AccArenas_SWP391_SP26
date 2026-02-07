@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using AccArenas.Api.Application.DTOs;
 using AccArenas.Api.Domain.Interfaces;
 using AccArenas.Api.Domain.Models;
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,21 +15,50 @@ namespace AccArenas.Api.Controllers
     public class GameAccountsController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IMapper _mapper;
 
-        public GameAccountsController(IUnitOfWork unitOfWork)
+        public GameAccountsController(IUnitOfWork unitOfWork, IMapper mapper)
         {
             _unitOfWork = unitOfWork;
+            _mapper = mapper;
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<GameAccount>>> GetGameAccounts()
+        public async Task<ActionResult<PagedResult<GameAccountDto>>> GetGameAccounts(
+            [FromQuery] string? query = null,
+            [FromQuery] Guid? categoryId = null,
+            [FromQuery] decimal? minPrice = null,
+            [FromQuery] decimal? maxPrice = null,
+            [FromQuery] bool? isAvailable = null,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10
+        )
         {
-            var accounts = await _unitOfWork.GameAccounts.GetAvailableAccountsAsync();
-            return Ok(accounts);
+            var (accounts, totalCount) = await _unitOfWork.GameAccounts.GetPagedAsync(
+                pageNumber,
+                pageSize,
+                g => (string.IsNullOrEmpty(query) || g.Game.Contains(query) || g.AccountName.Contains(query)) &&
+                     (!categoryId.HasValue || g.CategoryId == categoryId.Value) &&
+                     (!minPrice.HasValue || g.Price >= minPrice.Value) &&
+                     (!maxPrice.HasValue || g.Price <= maxPrice.Value) &&
+                     (!isAvailable.HasValue || g.IsAvailable == isAvailable.Value),
+                g => g.CreatedAt,
+                true
+            );
+
+            var dtos = _mapper.Map<IEnumerable<GameAccountDto>>(accounts);
+            
+            return Ok(new PagedResult<GameAccountDto>
+            {
+                Items = dtos,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalCount = totalCount
+            });
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<GameAccount>> GetGameAccount(Guid id)
+        public async Task<ActionResult<GameAccountDto>> GetGameAccount(Guid id)
         {
             var account = await _unitOfWork.GameAccounts.GetByIdAsync(id);
 
@@ -36,27 +67,30 @@ namespace AccArenas.Api.Controllers
                 return NotFound();
             }
 
-            return Ok(account);
+            var dto = _mapper.Map<GameAccountDto>(account);
+            return Ok(dto);
         }
 
         [HttpGet("game/{gameName}")]
-        public async Task<ActionResult<IEnumerable<GameAccount>>> GetAccountsByGame(string gameName)
+        public async Task<ActionResult<IEnumerable<GameAccountDto>>> GetAccountsByGame(string gameName)
         {
             var accounts = await _unitOfWork.GameAccounts.GetAccountsByGameAsync(gameName);
-            return Ok(accounts);
+            var dtos = _mapper.Map<IEnumerable<GameAccountDto>>(accounts);
+            return Ok(dtos);
         }
 
         [HttpGet("category/{categoryId}")]
-        public async Task<ActionResult<IEnumerable<GameAccount>>> GetAccountsByCategory(
+        public async Task<ActionResult<IEnumerable<GameAccountDto>>> GetAccountsByCategory(
             Guid categoryId
         )
         {
             var accounts = await _unitOfWork.GameAccounts.GetAccountsByCategoryAsync(categoryId);
-            return Ok(accounts);
+            var dtos = _mapper.Map<IEnumerable<GameAccountDto>>(accounts);
+            return Ok(dtos);
         }
 
         [HttpGet("price-range")]
-        public async Task<ActionResult<IEnumerable<GameAccount>>> GetAccountsByPriceRange(
+        public async Task<ActionResult<IEnumerable<GameAccountDto>>> GetAccountsByPriceRange(
             [FromQuery] decimal minPrice,
             [FromQuery] decimal maxPrice
         )
@@ -65,12 +99,13 @@ namespace AccArenas.Api.Controllers
                 minPrice,
                 maxPrice
             );
-            return Ok(accounts);
+            var dtos = _mapper.Map<IEnumerable<GameAccountDto>>(accounts);
+            return Ok(dtos);
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<GameAccount>> CreateGameAccount(GameAccount gameAccount)
+        [Authorize(Roles = "MarketingStaff")]
+        public async Task<ActionResult<GameAccountDto>> CreateGameAccount([FromBody] CreateGameAccountRequest request)
         {
             if (!ModelState.IsValid)
             {
@@ -84,7 +119,7 @@ namespace AccArenas.Api.Controllers
 
                 // Check if category exists
                 var categoryExists = await _unitOfWork.Categories.ExistsAsync(c =>
-                    c.Id == gameAccount.CategoryId
+                    c.Id == request.CategoryId
                 );
                 if (!categoryExists)
                 {
@@ -93,13 +128,14 @@ namespace AccArenas.Api.Controllers
 
                 // Check if account name already exists
                 var existingAccount = await _unitOfWork.GameAccounts.GetByAccountNameAsync(
-                    gameAccount.AccountName
+                    request.AccountName
                 );
                 if (existingAccount != null)
                 {
                     return BadRequest("Account name already exists");
                 }
 
+                var gameAccount = _mapper.Map<GameAccount>(request);
                 gameAccount.Id = Guid.NewGuid();
                 gameAccount.CreatedAt = DateTime.UtcNow;
 
@@ -108,10 +144,11 @@ namespace AccArenas.Api.Controllers
                 // Commit transaction
                 await _unitOfWork.CommitTransactionAsync();
 
+                var dto = _mapper.Map<GameAccountDto>(gameAccount);
                 return CreatedAtAction(
                     nameof(GetGameAccount),
                     new { id = gameAccount.Id },
-                    gameAccount
+                    dto
                 );
             }
             catch (Exception)
@@ -122,19 +159,9 @@ namespace AccArenas.Api.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> UpdateGameAccount(Guid id, GameAccount gameAccount)
+        [Authorize(Roles = "MarketingStaff")]
+        public async Task<IActionResult> UpdateGameAccount(Guid id, [FromBody] UpdateGameAccountRequest request)
         {
-            if (id != gameAccount.Id)
-            {
-                return BadRequest();
-            }
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             try
             {
                 await _unitOfWork.BeginTransactionAsync();
@@ -145,14 +172,8 @@ namespace AccArenas.Api.Controllers
                     return NotFound();
                 }
 
-                // Update properties
-                existingAccount.Game = gameAccount.Game;
-                existingAccount.AccountName = gameAccount.AccountName;
-                existingAccount.Rank = gameAccount.Rank;
-                existingAccount.Price = gameAccount.Price;
-                existingAccount.Currency = gameAccount.Currency;
-                existingAccount.IsAvailable = gameAccount.IsAvailable;
-                existingAccount.CategoryId = gameAccount.CategoryId;
+                // Map updates
+                _mapper.Map(request, existingAccount);
 
                 _unitOfWork.GameAccounts.Update(existingAccount);
                 await _unitOfWork.CommitTransactionAsync();
@@ -167,7 +188,7 @@ namespace AccArenas.Api.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "MarketingStaff")]
         public async Task<IActionResult> DeleteGameAccount(Guid id)
         {
             try
