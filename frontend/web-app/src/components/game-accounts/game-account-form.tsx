@@ -101,7 +101,7 @@ export const GameAccountForm = ({ id }: GameAccountFormProps) => {
       }));
       showSuccess("Tải ảnh lên thành công");
     } catch (error: any) {
-      showError(error.response?.data || "Không thể tải ảnh lên");
+      showError(error.message);
     } finally {
       hideLoading();
     }

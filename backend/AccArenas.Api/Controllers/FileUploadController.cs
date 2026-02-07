@@ -1,6 +1,8 @@
 using System;
 using System.IO;
+using System.Net;
 using System.Threading.Tasks;
+using AccArenas.Api.Application.Exceptions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Hosting;
@@ -25,7 +27,7 @@ namespace AccArenas.Api.Controllers
         {
             if (file == null || file.Length == 0)
             {
-                return BadRequest("No file uploaded.");
+                throw new ApiException("No file uploaded.", HttpStatusCode.BadRequest);
             }
 
             var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
@@ -33,13 +35,13 @@ namespace AccArenas.Api.Controllers
 
             if (Array.IndexOf(allowedExtensions, extension) < 0)
             {
-                return BadRequest("Invalid file type. Only JPG, JPEG, PNG, GIF, and WEBP are allowed.");
+                throw new ApiException("Invalid file type. Only JPG, JPEG, PNG, GIF, and WEBP are allowed.", HttpStatusCode.BadRequest);
             }
 
             // Max size 5MB
             if (file.Length > 5 * 1024 * 1024)
             {
-                return BadRequest("File size exceeds 5MB limit.");
+                throw new ApiException("File size exceeds 5MB limit.", HttpStatusCode.BadRequest);
             }
 
             var uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads");

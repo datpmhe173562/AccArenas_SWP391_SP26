@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Net;
 using AccArenas.Api.Application.DTOs;
 using AccArenas.Api.Application.Exceptions;
 using AccArenas.Api.Domain.Interfaces;
@@ -86,7 +87,7 @@ namespace AccArenas.Api.Controllers
 
                 if (promotion == null)
                 {
-                    return NotFound(new { message = "Không tìm thấy khuyến mãi" });
+                    throw new ApiException("Không tìm thấy khuyến mãi", HttpStatusCode.NotFound);
                 }
 
                 var promotionDto = _mapper.Map<PromotionDto>(promotion);
@@ -111,7 +112,7 @@ namespace AccArenas.Api.Controllers
 
                 if (promotion == null)
                 {
-                    return NotFound(new { message = "Không tìm thấy khuyến mãi với mã này" });
+                    throw new ApiException("Không tìm thấy khuyến mãi với mã này", HttpStatusCode.NotFound);
                 }
 
                 var promotionDto = _mapper.Map<PromotionDto>(promotion);
@@ -179,10 +180,7 @@ namespace AccArenas.Api.Controllers
         {
             if (!ModelState.IsValid)
             {
-                var errors = ModelState
-                    .Values.SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage);
-                return BadRequest(new { message = "Dữ liệu không hợp lệ", errors });
+                throw new ApiException("Dữ liệu không hợp lệ", HttpStatusCode.BadRequest);
             }
 
             try
@@ -191,20 +189,18 @@ namespace AccArenas.Api.Controllers
                 var existingPromotion = await _unitOfWork.Promotions.GetByCodeAsync(request.Code);
                 if (existingPromotion != null)
                 {
-                    return BadRequest(new { message = "Mã khuyến mãi đã tồn tại" });
+                    throw new ApiException("Mã khuyến mãi đã tồn tại", HttpStatusCode.BadRequest);
                 }
 
                 // Validate dates
                 if (request.StartDate >= request.EndDate)
                 {
-                    return BadRequest(new { message = "Ngày bắt đầu phải nhỏ hơn ngày kết thúc" });
+                    throw new ApiException("Ngày bắt đầu phải nhỏ hơn ngày kết thúc", HttpStatusCode.BadRequest);
                 }
 
                 if (request.EndDate <= DateTime.UtcNow)
                 {
-                    return BadRequest(
-                        new { message = "Ngày kết thúc phải lớn hơn thời điểm hiện tại" }
-                    );
+                    throw new ApiException("Ngày kết thúc phải lớn hơn thời điểm hiện tại", HttpStatusCode.BadRequest);
                 }
 
                 var promotion = _mapper.Map<Promotion>(request);
@@ -246,10 +242,7 @@ namespace AccArenas.Api.Controllers
         {
             if (!ModelState.IsValid)
             {
-                var errors = ModelState
-                    .Values.SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage);
-                return BadRequest(new { message = "Dữ liệu không hợp lệ", errors });
+                throw new ApiException("Dữ liệu không hợp lệ", HttpStatusCode.BadRequest);
             }
 
             try
@@ -257,7 +250,7 @@ namespace AccArenas.Api.Controllers
                 var existingPromotion = await _unitOfWork.Promotions.GetByIdAsync(id);
                 if (existingPromotion == null)
                 {
-                    return NotFound(new { message = "Không tìm thấy khuyến mãi" });
+                    throw new ApiException("Không tìm thấy khuyến mãi", HttpStatusCode.NotFound);
                 }
 
                 // Kiểm tra trùng mã code (trừ chính nó)
@@ -266,13 +259,13 @@ namespace AccArenas.Api.Controllers
                 );
                 if (promotionWithSameCode != null && promotionWithSameCode.Id != id)
                 {
-                    return BadRequest(new { message = "Mã khuyến mãi đã tồn tại" });
+                    throw new ApiException("Mã khuyến mãi đã tồn tại", HttpStatusCode.BadRequest);
                 }
 
                 // Validate dates
                 if (request.StartDate >= request.EndDate)
                 {
-                    return BadRequest(new { message = "Ngày bắt đầu phải nhỏ hơn ngày kết thúc" });
+                    throw new ApiException("Ngày bắt đầu phải nhỏ hơn ngày kết thúc", HttpStatusCode.BadRequest);
                 }
 
                 // Map updates
@@ -306,7 +299,7 @@ namespace AccArenas.Api.Controllers
                 var promotion = await _unitOfWork.Promotions.GetByIdAsync(id);
                 if (promotion == null)
                 {
-                    return NotFound(new { message = "Không tìm thấy khuyến mãi" });
+                    throw new ApiException("Không tìm thấy khuyến mãi", HttpStatusCode.NotFound);
                 }
 
                 _unitOfWork.Promotions.Delete(promotion);
@@ -335,7 +328,7 @@ namespace AccArenas.Api.Controllers
                 var promotion = await _unitOfWork.Promotions.GetByIdAsync(id);
                 if (promotion == null)
                 {
-                    return NotFound(new { message = "Không tìm thấy khuyến mãi" });
+                    throw new ApiException("Không tìm thấy khuyến mãi", HttpStatusCode.NotFound);
                 }
 
                 promotion.IsActive = !promotion.IsActive;
@@ -373,9 +366,7 @@ namespace AccArenas.Api.Controllers
             {
                 if (string.IsNullOrWhiteSpace(code))
                 {
-                    return BadRequest(
-                        new { isValid = false, message = "Mã khuyến mãi không được để trống" }
-                    );
+                    throw new ApiException("Mã khuyến mãi không được để trống", HttpStatusCode.BadRequest);
                 }
 
                 var promotion = await _unitOfWork.Promotions.GetByCodeAsync(code);

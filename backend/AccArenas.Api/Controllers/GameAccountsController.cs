@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Threading.Tasks;
 using AccArenas.Api.Application.DTOs;
+using AccArenas.Api.Application.Exceptions;
 using AccArenas.Api.Domain.Interfaces;
 using AccArenas.Api.Domain.Models;
 using AutoMapper;
@@ -64,7 +66,7 @@ namespace AccArenas.Api.Controllers
 
             if (account == null)
             {
-                return NotFound();
+                throw new ApiException($"Game account with ID {id} not found", HttpStatusCode.NotFound);
             }
 
             var dto = _mapper.Map<GameAccountDto>(account);
@@ -109,7 +111,7 @@ namespace AccArenas.Api.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                throw new ApiException("Invalid model state", HttpStatusCode.BadRequest);
             }
 
             try
@@ -123,7 +125,7 @@ namespace AccArenas.Api.Controllers
                 );
                 if (!categoryExists)
                 {
-                    return BadRequest("Category does not exist");
+                    throw new ApiException("Category does not exist", HttpStatusCode.BadRequest);
                 }
 
                 // Check if account name already exists
@@ -132,7 +134,7 @@ namespace AccArenas.Api.Controllers
                 );
                 if (existingAccount != null)
                 {
-                    return BadRequest("Account name already exists");
+                    throw new ApiException("Account name already exists", HttpStatusCode.BadRequest);
                 }
 
                 var gameAccount = _mapper.Map<GameAccount>(request);
@@ -169,7 +171,7 @@ namespace AccArenas.Api.Controllers
                 var existingAccount = await _unitOfWork.GameAccounts.GetByIdAsync(id);
                 if (existingAccount == null)
                 {
-                    return NotFound();
+                    throw new ApiException($"Game account with ID {id} not found", HttpStatusCode.NotFound);
                 }
 
                 // Map updates
@@ -198,7 +200,7 @@ namespace AccArenas.Api.Controllers
                 var account = await _unitOfWork.GameAccounts.GetByIdAsync(id);
                 if (account == null)
                 {
-                    return NotFound();
+                    throw new ApiException($"Game account with ID {id} not found", HttpStatusCode.NotFound);
                 }
 
                 _unitOfWork.GameAccounts.Delete(account);

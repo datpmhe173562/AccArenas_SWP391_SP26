@@ -1,6 +1,5 @@
 import MarketerLayout from "@/components/layout/MarketerLayout";
-import { CategoriesList } from "@/components/categories/categories-list";
-import { CreateCategoryForm } from "@/components/categories/create-category-form-new";
+import { SearchCategories } from "@/components/categories/search-categories";
 
 export default function MarketerCategoriesPage() {
     return (
@@ -15,14 +14,7 @@ export default function MarketerCategoriesPage() {
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div>
-                        <CreateCategoryForm />
-                    </div>
-                    <div>
-                        <CategoriesList />
-                    </div>
-                </div>
+                <SearchCategories />
             </div>
         </MarketerLayout>
     );

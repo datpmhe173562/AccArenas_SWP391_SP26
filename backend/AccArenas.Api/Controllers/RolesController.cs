@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using AccArenas.Api.Application.DTOs;
+using AccArenas.Api.Application.Exceptions;
 using AccArenas.Api.Application.Services;
 using AccArenas.Api.Domain.Models;
 using AutoMapper;
@@ -77,7 +79,7 @@ namespace AccArenas.Api.Controllers
 
             if (role == null)
             {
-                return NotFound($"Role with ID {id} not found");
+                throw new ApiException($"Role with ID {id} not found", HttpStatusCode.NotFound);
             }
 
             var roleDto = _mapper.Map<RoleDto>(role);
@@ -90,14 +92,14 @@ namespace AccArenas.Api.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                throw new ApiException("Invalid model state", HttpStatusCode.BadRequest);
             }
 
             // Check if role already exists
             var existingRole = await _roleManager.FindByNameAsync(request.Name);
             if (existingRole != null)
             {
-                return BadRequest("Role with this name already exists");
+                throw new ApiException("Role with this name already exists", HttpStatusCode.BadRequest);
             }
 
             var role = _mapper.Map<ApplicationRole>(request);
@@ -106,7 +108,8 @@ namespace AccArenas.Api.Controllers
 
             if (!result.Succeeded)
             {
-                return BadRequest(result.Errors);
+                var errors = result.Errors.ToDictionary(e => e.Code, e => e.Description);
+                throw new ApiException("Failed to create role", HttpStatusCode.BadRequest, errors);
             }
 
             var roleDto = _mapper.Map<RoleDto>(role);
@@ -119,13 +122,13 @@ namespace AccArenas.Api.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                throw new ApiException("Invalid model state", HttpStatusCode.BadRequest);
             }
 
             var role = await _roleManager.FindByIdAsync(id.ToString());
             if (role == null)
             {
-                return NotFound($"Role with ID {id} not found");
+                throw new ApiException($"Role with ID {id} not found", HttpStatusCode.NotFound);
             }
 
             _mapper.Map(request, role);
@@ -134,7 +137,8 @@ namespace AccArenas.Api.Controllers
 
             if (!result.Succeeded)
             {
-                return BadRequest(result.Errors);
+                var errors = result.Errors.ToDictionary(e => e.Code, e => e.Description);
+                throw new ApiException("Failed to update role", HttpStatusCode.BadRequest, errors);
             }
 
             return NoContent();
@@ -146,15 +150,16 @@ namespace AccArenas.Api.Controllers
             var role = await _roleManager.FindByIdAsync(id.ToString());
             if (role == null)
             {
-                return NotFound($"Role with ID {id} not found");
+                throw new ApiException($"Role with ID {id} not found", HttpStatusCode.NotFound);
             }
 
             // Check if role is being used by any users
             var usersInRole = await _userManager.GetUsersInRoleAsync(role.Name!);
             if (usersInRole.Any())
             {
-                return BadRequest(
-                    $"Cannot delete role '{role.Name}' because it is assigned to {usersInRole.Count} user(s)"
+                throw new ApiException(
+                    $"Cannot delete role '{role.Name}' because it is assigned to {usersInRole.Count} user(s)",
+                    HttpStatusCode.BadRequest
                 );
             }
 
@@ -162,14 +167,15 @@ namespace AccArenas.Api.Controllers
             var systemRoles = new[] { "Admin", "Customer", "Staff" };
             if (systemRoles.Contains(role.Name))
             {
-                return BadRequest("Cannot delete system roles");
+                throw new ApiException("Cannot delete system roles", HttpStatusCode.BadRequest);
             }
 
             var result = await _roleManager.DeleteAsync(role);
 
             if (!result.Succeeded)
             {
-                return BadRequest(result.Errors);
+                var errors = result.Errors.ToDictionary(e => e.Code, e => e.Description);
+                throw new ApiException("Failed to delete role", HttpStatusCode.BadRequest, errors);
             }
 
             return NoContent();
@@ -181,7 +187,7 @@ namespace AccArenas.Api.Controllers
             var role = await _roleManager.FindByIdAsync(id.ToString());
             if (role == null)
             {
-                return NotFound($"Role with ID {id} not found");
+                throw new ApiException($"Role with ID {id} not found", HttpStatusCode.NotFound);
             }
 
             var users = await _userManager.GetUsersInRoleAsync(role.Name!);

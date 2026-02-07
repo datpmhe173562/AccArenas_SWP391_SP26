@@ -21,8 +21,8 @@ export const categoryService = {
     return res.data;
   },
 
-  async getCategoryById(id: string): Promise<ApiResponse<CategoryDto>> {
-    const res = await axiosInstance.get<ApiResponse<CategoryDto>>(`/api/categories/${id}`);
+  async getCategoryById(id: string): Promise<CategoryDto> {
+    const res = await axiosInstance.get<CategoryDto>(`/api/categories/${id}`);
     return res.data;
   },
 
