@@ -139,88 +139,133 @@ export default function UsersPage() {
 
   return (
     <AdminLayout>
-      <div>
-        <div className="mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h1 className="text-2xl font-bold text-gray-800">
-              Quản lý người dùng
-            </h1>
-            <div className="flex gap-2">
+      <div className="space-y-6">
+        {/* Header Card */}
+        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 mb-1">
+                Quản lý Người dùng
+              </h1>
+              <p className="text-gray-500 text-sm">
+                Quản lý thông tin và phân quyền người dùng trong hệ thống
+              </p>
+            </div>
+            <div className="flex gap-3">
               <Link href="/admin/users/add">
-                <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                <button className="px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition shadow-sm flex items-center gap-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
                   Thêm người dùng
                 </button>
               </Link>
-              <button
-                onClick={fetchUsers}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
-              >
-                Làm mới
-              </button>
             </div>
           </div>
+        </div>
 
-          {/* Filters Row */}
-          <div className="flex flex-wrap gap-3 items-center">
-            {/* Search */}
-            <input
-              type="text"
-              placeholder="Tìm kiếm..."
-              className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 flex-1 min-w-[200px]"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+        {/* Filter & Search Card */}
+        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+          <div className="flex flex-col lg:flex-row gap-6">
+            {/* Search Section - Takes up available space */}
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tìm kiếm người dùng
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Nhập email, tên đăng nhập hoặc họ tên..."
+                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
 
-            {/* Role Filter */}
-            <select
-              value={selectedRole}
-              onChange={(e) => setSelectedRole(e.target.value)}
-              className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="All">Tất cả vai trò</option>
-              <option value="Admin">Admin</option>
-              <option value="Customer">Customer</option>
-              <option value="SalesStaff">Sales Staff</option>
-              <option value="MarketingStaff">Marketing Staff</option>
-            </select>
+            {/* Filters Section - Fixed width or auto */}
+            <div className="flex flex-col sm:flex-row gap-4">
+               {/* Sort By */}
+              <div className="min-w-[200px]">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Sắp xếp theo
+                </label>
+                <select
+                  value={`${sortBy}-${sortOrder}`}
+                  onChange={(e) => {
+                    const [field, order] = e.target.value.split("-");
+                    setSortBy(field);
+                    setSortOrder(order as "asc" | "desc");
+                  }}
+                  className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                >
+                  <option value="createdAt-desc">Ngày tạo (Mới nhất)</option>
+                  <option value="createdAt-asc">Ngày tạo (Cũ nhất)</option>
+                  <option value="userName-asc">Tên (A-Z)</option>
+                  <option value="userName-desc">Tên (Z-A)</option>
+                  <option value="email-asc">Email (A-Z)</option>
+                  <option value="email-desc">Email (Z-A)</option>
+                </select>
+              </div>
 
-            {/* Status Filter */}
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="All">Tất cả trạng thái</option>
-              <option value="Active">Hoạt động</option>
-              <option value="Inactive">Đã khóa</option>
-            </select>
-
-            {/* Sort By */}
-            <select
-              value={`${sortBy}-${sortOrder}`}
-              onChange={(e) => {
-                const [field, order] = e.target.value.split("-");
-                setSortBy(field);
-                setSortOrder(order as "asc" | "desc");
-              }}
-              className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="createdAt-desc">Ngày tạo (Mới nhất)</option>
-              <option value="createdAt-asc">Ngày tạo (Cũ nhất)</option>
-              <option value="userName-asc">Tên (A-Z)</option>
-              <option value="userName-desc">Tên (Z-A)</option>
-              <option value="email-asc">Email (A-Z)</option>
-              <option value="email-desc">Email (Z-A)</option>
-            </select>
-
-            {/* Clear Filters */}
-            <button
-              onClick={handleClearFilters}
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
-            >
-              Xóa bộ lọc
-            </button>
+               {/* Role Filter */}
+              <div className="min-w-[180px]">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Lọc theo vai trò
+                </label>
+                <select
+                  value={selectedRole}
+                  onChange={(e) => setSelectedRole(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                >
+                  <option value="All">Tất cả vai trò</option>
+                  <option value="Admin">Admin</option>
+                  <option value="Customer">Customer</option>
+                  <option value="SalesStaff">Sales Staff</option>
+                  <option value="MarketingStaff">Marketing Staff</option>
+                </select>
+              </div>
+              
+               {/* Status Filter */}
+                <div className="min-w-[180px]">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Trạng thái
+                </label>
+                <select
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                >
+                  <option value="All">Tất cả trạng thái</option>
+                  <option value="Active">Hoạt động</option>
+                  <option value="Inactive">Đã khóa</option>
+                </select>
+              </div>
+            </div>
           </div>
+          
+           {/* Active Filters Summary & Clear */}
+           {(searchTerm || selectedRole !== "All" || selectedStatus !== "All") && (
+            <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
+                <div className="flex gap-2 text-sm text-gray-600">
+                    <span>Đang lọc:</span>
+                    {searchTerm && <span className="bg-gray-100 px-2 py-0.5 rounded">Từ khóa: "{searchTerm}"</span>}
+                    {selectedRole !== "All" && <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded">Vai trò: {selectedRole}</span>}
+                    {selectedStatus !== "All" && <span className={`px-2 py-0.5 rounded ${selectedStatus === 'Active' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>Trạng thái: {selectedStatus === 'Active' ? 'Hoạt động' : 'Đã khóa'}</span>}
+                </div>
+                <button 
+                  onClick={handleClearFilters}
+                  className="text-sm text-red-600 hover:text-red-800 font-medium hover:underline"
+                >
+                  Xóa bộ lọc
+                </button>
+            </div>
+           )}
         </div>
 
         <div className="bg-white shadow-md rounded-lg overflow-hidden">

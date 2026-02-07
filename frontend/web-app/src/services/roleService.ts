@@ -9,10 +9,30 @@ export const RoleService = {
         return res.data.items || [];
     },
 
-    async getRoles(page = 1, pageSize = 10): Promise<ApiResponse<any>> {
-        const res = await axiosInstance.get<ApiResponse<any>>('/api/roles', {
+    async getRoles(page = 1, pageSize = 10): Promise<any> {
+        const res = await axiosInstance.get<any>('/api/roles', {
             params: { page, pageSize }
         });
+        return res.data;
+    },
+
+    async getRoleById(id: string): Promise<ApiResponse<RoleDto>> {
+        const res = await axiosInstance.get<ApiResponse<RoleDto>>(`/api/roles/${id}`);
+        return res.data;
+    },
+
+    async createRole(payload: any): Promise<ApiResponse<RoleDto>> {
+        const res = await axiosInstance.post<ApiResponse<RoleDto>>('/api/roles', payload);
+        return res.data;
+    },
+
+    async updateRole(id: string, payload: any): Promise<ApiResponse<void>> {
+        const res = await axiosInstance.put<ApiResponse<void>>(`/api/roles/${id}`, payload);
+        return res.data;
+    },
+
+    async deleteRole(id: string): Promise<ApiResponse<void>> {
+        const res = await axiosInstance.delete<ApiResponse<void>>(`/api/roles/${id}`);
         return res.data;
     }
 };
