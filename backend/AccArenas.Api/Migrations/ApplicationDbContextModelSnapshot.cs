@@ -199,6 +199,9 @@ namespace AccArenas.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("Image")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
@@ -266,6 +269,10 @@ namespace AccArenas.Api.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Game")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Images")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 

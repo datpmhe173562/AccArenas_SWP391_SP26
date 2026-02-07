@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useSearchGameAccounts } from "@/hooks/useGameAccounts";
+import { useSearchGameAccounts, useDeleteGameAccount } from "@/hooks/useGameAccounts";
 import { useCategories } from "@/hooks/useCategories";
-import { GameAccountDto } from "@/types/generated-api";
-import { GameAccountsList } from "./game-accounts-list";
+import { GameAccountDto, CategoryDto } from "@/types/generated-api";
+import { useRouter } from "next/navigation";
+import { showConfirm, showSuccess, showError } from "@/lib/sweetalert";
+import Link from "next/link";
 
 interface SearchGameAccountsProps {
   onSelectAccount?: (gameAccount: GameAccountDto) => void;
@@ -49,7 +51,7 @@ export const SearchGameAccounts = ({
     maxPrice,
     isAvailable,
     page,
-    12,
+    10,
     true, // enabled
   );
 
@@ -77,14 +79,24 @@ export const SearchGameAccounts = ({
           <h2 className="text-2xl font-bold text-gray-900">
             Tìm kiếm Game Accounts
           </h2>
-          {hasActiveFilters && (
-            <button
-              onClick={handleReset}
-              className="text-sm text-blue-600 hover:text-blue-800"
-            >
-              Xóa bộ lọc
-            </button>
-          )}
+          <div className="flex gap-4 items-center">
+            {hasActiveFilters && (
+              <button
+                onClick={handleReset}
+                className="text-sm text-blue-600 hover:text-blue-800"
+              >
+                Xóa bộ lọc
+              </button>
+            )}
+            <Link href="/marketer/products/add">
+              <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Thêm sản phẩm
+              </button>
+            </Link>
+          </div>
         </div>
 
         {/* Search Form */}
@@ -143,6 +155,7 @@ export const SearchGameAccounts = ({
             </div>
           </div>
 
+
           {/* Category Filter */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -154,7 +167,7 @@ export const SearchGameAccounts = ({
               className="w-full py-2 px-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="">Tất cả categories</option>
-              {categoriesData?.data?.data.map((category) => (
+              {categoriesData?.items?.map((category: CategoryDto) => (
                 <option key={category.id} value={category.id}>
                   {category.name}
                 </option>
@@ -234,8 +247,8 @@ export const SearchGameAccounts = ({
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                   Category:{" "}
                   {
-                    categoriesData?.data?.data.find(
-                      (c) => c.id === selectedCategoryId,
+                    categoriesData?.items?.find(
+                      (c: CategoryDto) => c.id === selectedCategoryId,
                     )?.name
                   }
                   <button
@@ -286,16 +299,6 @@ export const SearchGameAccounts = ({
           </div>
         ) : (
           <>
-            {/* Results Summary */}
-            {searchResults && (
-              <div className="mb-4 text-sm text-gray-600">
-                Tìm thấy {searchResults.data?.totalCount || 0} kết quả
-                {page > 1 &&
-                  ` (Trang ${page}/${searchResults.data?.totalPages || 1})`}
-              </div>
-            )}
-
-            {/* Custom GameAccountsList that handles search results */}
             <SearchResultsList
               searchResults={searchResults}
               isLoading={isSearching}
@@ -317,6 +320,13 @@ interface SearchResultsListProps {
   page: number;
   onPageChange: (page: number) => void;
   onSelectAccount?: (gameAccount: GameAccountDto) => void;
+  filters?: {
+    query?: string;
+    categoryId?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    isAvailable?: boolean;
+  }
 }
 
 const SearchResultsList = ({
@@ -326,6 +336,38 @@ const SearchResultsList = ({
   onPageChange,
   onSelectAccount,
 }: SearchResultsListProps) => {
+  const deleteGameAccount = useDeleteGameAccount();
+  const router = useRouter();
+
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation(); // Prevent row click
+    
+    const isConfirmed = await showConfirm(
+      "Bạn có chắc chắn muốn xóa game account này?",
+      "Xác nhận xóa"
+    );
+
+    if (!isConfirmed) return;
+
+    try {
+      await deleteGameAccount.mutateAsync(id);
+      showSuccess("Đã xóa game account thành công");
+    } catch (error) {
+      showError("Không thể xóa game account");
+      console.error("Error deleting game account:", error);
+    }
+  };
+
+  const handleEdit = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    router.push(`/marketer/products/update/${id}`);
+  };
+
+  const handleView = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    router.push(`/marketer/products/detail/${id}`);
+  };
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -339,7 +381,11 @@ const SearchResultsList = ({
     );
   }
 
-  if (!searchResults?.data?.data || searchResults.data.data.length === 0) {
+  const items = searchResults?.items || [];
+  const totalCount = searchResults?.totalCount || 0;
+  const totalPages = searchResults?.totalPages || 0;
+
+  if (totalCount === 0 && !isLoading) {
     return (
       <div className="text-center py-12">
         <svg
@@ -367,53 +413,112 @@ const SearchResultsList = ({
 
   return (
     <>
-      {/* Mock the GameAccountsList structure but with search results */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {searchResults.data.data.map((gameAccount: GameAccountDto) => (
-          <div
-            key={gameAccount.id}
-            className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden cursor-pointer"
-            onClick={() => onSelectAccount?.(gameAccount)}
-          >
-            {/* Simplified game account card */}
-            <div className="aspect-w-16 aspect-h-9 bg-gray-200">
-              <div className="w-full h-48 bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center">
-                <svg
-                  className="w-12 h-12 text-white"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path d="M4 3a2 2 0 00-2 2v1.816a2 2 0 00.797 1.599l2.5 1.875A2 2 0 008 9.816V15a1 1 0 102 0V9.816a2 2 0 002.703-.375l2.5-1.875A2 2 0 0016 6.816V5a2 2 0 00-2-2H4z" />
-                </svg>
-              </div>
-            </div>
+      {/* Results Summary */}
+      <div className="mb-4 text-sm text-gray-600">
+        Tìm thấy {totalCount} kết quả
+        {totalPages > 1 &&
+          ` (Trang ${page}/${totalPages})`}
+      </div>
 
-            <div className="p-4">
-              <h3 className="font-semibold text-lg text-gray-900 mb-2 line-clamp-2">
-                {gameAccount.game}
-              </h3>
-
-              <p className="text-2xl font-bold text-green-600 mb-2">
-                {new Intl.NumberFormat("vi-VN", {
-                  style: "currency",
-                  currency: "VND",
-                }).format(gameAccount.price)}
-              </p>
-
-              <p className="text-xs text-gray-500">
-                {gameAccount.isAvailable ? (
-                  <span className="text-green-600">● Có sẵn</span>
-                ) : (
-                  <span className="text-red-600">● Đã bán</span>
-                )}
-              </p>
-            </div>
-          </div>
-        ))}
+      {/* Results Table */}
+      <div className="bg-white shadow-md rounded-lg overflow-hidden">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Game / Account
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Category
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Giá
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Trạng thái
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Ngày tạo
+              </th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Thao tác
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {items.map((gameAccount: GameAccountDto) => (
+              <tr 
+                key={gameAccount.id} 
+                className="hover:bg-gray-50 transition-colors"
+                onClick={(e) => handleView(e, gameAccount.id)}
+              >
+                <td className="px-6 py-4 whitespace-nowrap cursor-pointer">
+                  <div className="flex items-center">
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">
+                        {gameAccount.game}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {gameAccount.accountName}
+                      </div>
+                       {gameAccount.rank && (
+                        <div className="text-xs text-gray-400">
+                          Rank: {gameAccount.rank}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                   <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                    {gameAccount.categoryName || "Unknown Category"}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                   <div className="text-sm font-medium text-gray-900">
+                    {new Intl.NumberFormat("vi-VN", {
+                      style: "currency",
+                      currency: "VND",
+                    }).format(gameAccount.price)}
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span
+                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      gameAccount.isAvailable
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
+                    }`}
+                  >
+                    {gameAccount.isAvailable ? "Có sẵn" : "Đã bán"}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                   {new Date(gameAccount.createdAt || "").toLocaleDateString("vi-VN")}
+                </td>
+                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button 
+                      onClick={(e) => handleEdit(e, gameAccount.id)}
+                      className="text-green-600 hover:text-green-900 mr-3"
+                    >
+                      Cập nhật
+                    </button>
+                    <button 
+                      onClick={(e) => handleDelete(e, gameAccount.id)}
+                      disabled={deleteGameAccount.isPending}
+                      className="text-red-600 hover:text-red-900 disabled:opacity-50"
+                    >
+                      Xóa
+                    </button>
+                 </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       {/* Pagination for search results */}
-      {searchResults?.data && searchResults.data.totalPages > 1 && (
+      {totalPages > 1 && (
         <div className="flex justify-center items-center space-x-4 mt-8">
           <button
             onClick={() => onPageChange(Math.max(1, page - 1))}
@@ -424,14 +529,14 @@ const SearchResultsList = ({
           </button>
 
           <span className="text-sm text-gray-700">
-            Trang {page} / {searchResults.data.totalPages}
+            Trang {page} / {totalPages}
           </span>
 
           <button
             onClick={() =>
-              onPageChange(Math.min(searchResults.data.totalPages, page + 1))
+              onPageChange(Math.min(totalPages, page + 1))
             }
-            disabled={page === searchResults.data.totalPages}
+            disabled={page === totalPages}
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Sau

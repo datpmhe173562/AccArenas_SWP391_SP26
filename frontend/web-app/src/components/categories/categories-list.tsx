@@ -60,7 +60,9 @@ export const CategoriesList = ({
     );
   }
 
-  const categories = categoriesData?.data?.data || [];
+  const categories = categoriesData?.items || [];
+  const totalCount = categoriesData?.totalCount || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
 
   return (
     <div className="space-y-4">
@@ -68,17 +70,43 @@ export const CategoriesList = ({
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-900">Categories</h2>
         <p className="text-sm text-gray-600">
-          Tổng cộng: {categoriesData?.data?.totalCount || 0} categories
+          Tổng cộng: {totalCount} categories
         </p>
       </div>
 
       {/* Categories Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {categories.map((category) => (
+        {categories.map((category: CategoryDto) => (
           <div
             key={category.id}
             className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 p-6"
           >
+            {/* Category Image */}
+            <div className="mb-4 aspect-w-16 aspect-h-9 bg-gray-100 rounded-md overflow-hidden relative">
+              {category.image ? (
+                <img
+                  src={category.image}
+                  alt={category.name}
+                  className="w-full h-32 object-cover"
+                />
+              ) : (
+                <div className="w-full h-32 bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center text-blue-300">
+                  <svg
+                    className="w-12 h-12"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                </div>
+              )}
+            </div>
             {/* Category Header */}
             <div className="flex justify-between items-start mb-4">
               <h3 className="text-xl font-semibold text-gray-900 truncate">
@@ -168,7 +196,7 @@ export const CategoriesList = ({
       )}
 
       {/* Pagination */}
-      {categoriesData?.data && categoriesData.data.totalPages > 1 && (
+      {totalPages > 1 && (
         <div className="flex justify-center items-center space-x-4 mt-6">
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
@@ -179,16 +207,16 @@ export const CategoriesList = ({
           </button>
 
           <span className="text-sm text-gray-700">
-            Trang {page} / {categoriesData.data.totalPages}
+            Trang {page} / {totalPages}
           </span>
 
           <button
             onClick={() =>
               setPage((p) =>
-                Math.min(categoriesData.data?.totalPages || 1, p + 1),
+                Math.min(totalPages || 1, p + 1),
               )
             }
-            disabled={page === categoriesData.data?.totalPages}
+            disabled={page === totalPages}
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Sau

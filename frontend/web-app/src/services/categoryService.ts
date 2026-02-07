@@ -1,14 +1,14 @@
 import { axiosInstance } from '@/lib/axios';
-import { 
-  CategoryDto, 
-  CreateCategoryRequest, 
-  UpdateCategoryRequest 
+import {
+  CategoryDto,
+  CreateCategoryRequest,
+  UpdateCategoryRequest
 } from '@/types/generated-api';
-import { ApiResponse, PaginatedResponse } from '@/types/generated-api';
+import { ApiResponse, PaginatedResponse, PagedResult } from '@/types/generated-api';
 
 export const categoryService = {
-  async getCategories(page = 1, pageSize = 10): Promise<ApiResponse<PaginatedResponse<CategoryDto>>> {
-    const res = await axiosInstance.get<ApiResponse<PaginatedResponse<CategoryDto>>>('/api/categories', {
+  async getCategories(page = 1, pageSize = 10): Promise<PagedResult<CategoryDto>> {
+    const res = await axiosInstance.get<PagedResult<CategoryDto>>('/api/categories', {
       params: { page, pageSize }
     });
     return res.data;
