@@ -35,8 +35,24 @@ axiosInstance.interceptors.response.use(
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
       localStorage.removeItem('user');
-      window.location.href = '/auth/login';
+      // Only redirect if not already on login page to avoid loops
+      if (typeof window !== 'undefined' && !window.location.pathname.includes('/auth/login')) {
+        window.location.href = '/auth/login';
+      }
     }
+
+    // Extract custom error message from backend
+    if (error.response?.data) {
+      const data = error.response.data;
+      if (typeof data === 'string') {
+        error.message = data;
+      } else if (data.message) {
+        error.message = data.message;
+      } else if (data.error) {
+        error.message = data.error;
+      }
+    }
+
     return Promise.reject(error);
   }
 );

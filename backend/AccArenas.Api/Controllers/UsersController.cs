@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using AccArenas.Api.Application.DTOs;
+using AccArenas.Api.Application.Exceptions;
 using AccArenas.Api.Application.Services;
 using AccArenas.Api.Domain.Models;
 using AutoMapper;
@@ -104,7 +106,7 @@ namespace AccArenas.Api.Controllers
 
             if (user == null)
             {
-                return NotFound($"User with ID {id} not found");
+                throw new ApiException($"User with ID {id} not found", HttpStatusCode.NotFound);
             }
 
             var roles = await _userManager.GetRolesAsync(user);
@@ -129,24 +131,21 @@ namespace AccArenas.Api.Controllers
             
             if (!ModelState.IsValid)
             {
-                _logger.LogWarning("[CreateUser] Invalid model state");
-                return BadRequest(ModelState);
+                throw new ApiException("Invalid model state", HttpStatusCode.BadRequest);
             }
 
             // Check if username already exists
             var existingUser = await _userManager.FindByNameAsync(request.UserName);
             if (existingUser != null)
             {
-                _logger.LogWarning("[CreateUser] Username {UserName} already exists", request.UserName);
-                return BadRequest("Username already exists");
+                throw new ApiException("Username already exists", HttpStatusCode.BadRequest);
             }
 
             // Check if email already exists
             var existingEmail = await _userManager.FindByEmailAsync(request.Email);
             if (existingEmail != null)
             {
-                _logger.LogWarning("[CreateUser] Email {Email} already exists", request.Email);
-                return BadRequest("Email already exists");
+                throw new ApiException("Email already exists", HttpStatusCode.BadRequest);
             }
 
             var user = _mapper.Map<ApplicationUser>(request);
@@ -156,8 +155,8 @@ namespace AccArenas.Api.Controllers
 
             if (!result.Succeeded)
             {
-                _logger.LogError("[CreateUser] Failed to create user: {Errors}", string.Join(", ", result.Errors.Select(e => e.Description)));
-                return BadRequest(result.Errors);
+                var errors = result.Errors.ToDictionary(e => e.Code, e => e.Description);
+                throw new ApiException("Failed to create user", HttpStatusCode.BadRequest, errors);
             }
 
             _logger.LogInformation("[CreateUser] User created successfully with ID: {UserId}", user.Id);
@@ -209,15 +208,13 @@ namespace AccArenas.Api.Controllers
             
             if (!ModelState.IsValid)
             {
-                _logger.LogWarning("[UpdateUser] Invalid model state");
-                return BadRequest(ModelState);
+                throw new ApiException("Invalid model state", HttpStatusCode.BadRequest);
             }
 
             var user = await _userManager.FindByIdAsync(id.ToString());
             if (user == null)
             {
-                _logger.LogWarning("[UpdateUser] User with ID {UserId} not found", id);
-                return NotFound($"User with ID {id} not found");
+                throw new ApiException($"User with ID {id} not found", HttpStatusCode.NotFound);
             }
 
             _logger.LogInformation("[UpdateUser] Updating user {UserName}", user.UserName);
@@ -227,8 +224,8 @@ namespace AccArenas.Api.Controllers
 
             if (!result.Succeeded)
             {
-                _logger.LogError("[UpdateUser] Failed to update user: {Errors}", string.Join(", ", result.Errors.Select(e => e.Description)));
-                return BadRequest(result.Errors);
+                var errors = result.Errors.ToDictionary(e => e.Code, e => e.Description);
+                throw new ApiException("Failed to update user", HttpStatusCode.BadRequest, errors);
             }
 
             // Update password if provided
@@ -242,8 +239,8 @@ namespace AccArenas.Api.Controllers
                 
                 if (!passwordResult.Succeeded)
                 {
-                    _logger.LogError("[UpdateUser] Failed to update password: {Errors}", string.Join(", ", passwordResult.Errors.Select(e => e.Description)));
-                    return BadRequest(passwordResult.Errors);
+                    var errors = passwordResult.Errors.ToDictionary(e => e.Code, e => e.Description);
+                    throw new ApiException("Failed to update password", HttpStatusCode.BadRequest, errors);
                 }
                 
                 _logger.LogInformation("[UpdateUser] Password updated successfully");
@@ -259,14 +256,15 @@ namespace AccArenas.Api.Controllers
             var user = await _userManager.FindByIdAsync(id.ToString());
             if (user == null)
             {
-                return NotFound($"User with ID {id} not found");
+                throw new ApiException($"User with ID {id} not found", HttpStatusCode.NotFound);
             }
 
             var result = await _userManager.DeleteAsync(user);
 
             if (!result.Succeeded)
             {
-                return BadRequest(result.Errors);
+                var errors = result.Errors.ToDictionary(e => e.Code, e => e.Description);
+                throw new ApiException("Failed to delete user", HttpStatusCode.BadRequest, errors);
             }
 
             return NoContent();
@@ -278,26 +276,27 @@ namespace AccArenas.Api.Controllers
             var user = await _userManager.FindByIdAsync(id.ToString());
             if (user == null)
             {
-                return NotFound($"User with ID {id} not found");
+                throw new ApiException($"User with ID {id} not found", HttpStatusCode.NotFound);
             }
 
             var roleExists = await _roleManager.RoleExistsAsync(request.RoleName);
             if (!roleExists)
             {
-                return BadRequest("Role does not exist");
+                throw new ApiException("Role does not exist", HttpStatusCode.BadRequest);
             }
 
             var isInRole = await _userManager.IsInRoleAsync(user, request.RoleName);
             if (isInRole)
             {
-                return BadRequest("User already has this role");
+                throw new ApiException("User already has this role", HttpStatusCode.BadRequest);
             }
 
             var result = await _userManager.AddToRoleAsync(user, request.RoleName);
 
             if (!result.Succeeded)
             {
-                return BadRequest(result.Errors);
+                var errors = result.Errors.ToDictionary(e => e.Code, e => e.Description);
+                throw new ApiException("Failed to assign role", HttpStatusCode.BadRequest, errors);
             }
 
             return Ok($"Role '{request.RoleName}' assigned to user successfully");
@@ -309,20 +308,21 @@ namespace AccArenas.Api.Controllers
             var user = await _userManager.FindByIdAsync(id.ToString());
             if (user == null)
             {
-                return NotFound($"User with ID {id} not found");
+                throw new ApiException($"User with ID {id} not found", HttpStatusCode.NotFound);
             }
 
             var isInRole = await _userManager.IsInRoleAsync(user, request.RoleName);
             if (!isInRole)
             {
-                return BadRequest("User does not have this role");
+                throw new ApiException("User does not have this role", HttpStatusCode.BadRequest);
             }
 
             var result = await _userManager.RemoveFromRoleAsync(user, request.RoleName);
 
             if (!result.Succeeded)
             {
-                return BadRequest(result.Errors);
+                var errors = result.Errors.ToDictionary(e => e.Code, e => e.Description);
+                throw new ApiException("Failed to remove role", HttpStatusCode.BadRequest, errors);
             }
 
             return Ok($"Role '{request.RoleName}' removed from user successfully");
@@ -334,7 +334,7 @@ namespace AccArenas.Api.Controllers
             var user = await _userManager.FindByIdAsync(id.ToString());
             if (user == null)
             {
-                return NotFound($"User with ID {id} not found");
+                throw new ApiException($"User with ID {id} not found", HttpStatusCode.NotFound);
             }
 
             var roles = await _userManager.GetRolesAsync(user);
@@ -347,7 +347,7 @@ namespace AccArenas.Api.Controllers
             var user = await _userManager.FindByIdAsync(id.ToString());
             if (user == null)
             {
-                return NotFound($"User with ID {id} not found");
+                throw new ApiException($"User with ID {id} not found", HttpStatusCode.NotFound);
             }
 
             user.IsActive = !user.IsActive;
@@ -355,7 +355,8 @@ namespace AccArenas.Api.Controllers
 
             if (!result.Succeeded)
             {
-                return BadRequest(result.Errors);
+                var errors = result.Errors.ToDictionary(e => e.Code, e => e.Description);
+                throw new ApiException("Failed to toggle user status", HttpStatusCode.BadRequest, errors);
             }
 
             return Ok(new { IsActive = user.IsActive });

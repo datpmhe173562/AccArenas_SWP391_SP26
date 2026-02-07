@@ -11,18 +11,18 @@ const QUERY_KEYS = {
 } as const;
 
 // Get game accounts with pagination
-export const useGameAccounts = (page = 1, pageSize = 10) => {
+export const useGameAccounts = (pageNumber = 1, pageSize = 10) => {
   return useQuery({
-    queryKey: [QUERY_KEYS.gameAccounts, { page, pageSize }],
-    queryFn: () => gameAccountService.getGameAccounts(page, pageSize),
+    queryKey: [QUERY_KEYS.gameAccounts, { pageNumber, pageSize }],
+    queryFn: () => gameAccountService.getGameAccounts(pageNumber, pageSize),
   });
 };
 
 // Get game accounts by category
-export const useGameAccountsByCategory = (categoryId: string, page = 1, pageSize = 10) => {
+export const useGameAccountsByCategory = (categoryId: string, pageNumber = 1, pageSize = 10) => {
   return useQuery({
-    queryKey: [QUERY_KEYS.gameAccountsByCategory, categoryId, { page, pageSize }],
-    queryFn: () => gameAccountService.getGameAccountsByCategory(categoryId, page, pageSize),
+    queryKey: [QUERY_KEYS.gameAccountsByCategory, categoryId, { pageNumber, pageSize }],
+    queryFn: () => gameAccountService.getGameAccountsByCategory(categoryId, pageNumber, pageSize),
     enabled: !!categoryId,
   });
 };
@@ -43,19 +43,19 @@ export const useSearchGameAccounts = (
   minPrice?: number,
   maxPrice?: number,
   isAvailable?: boolean,
-  page = 1,
+  pageNumber = 1,
   pageSize = 10,
   enabled = true
 ) => {
   return useQuery({
-    queryKey: [QUERY_KEYS.searchGameAccounts, { 
-      query, 
-      categoryId, 
-      minPrice, 
-      maxPrice, 
-      isAvailable, 
-      page, 
-      pageSize 
+    queryKey: [QUERY_KEYS.searchGameAccounts, {
+      query,
+      categoryId,
+      minPrice,
+      maxPrice,
+      isAvailable,
+      pageNumber,
+      pageSize
     }],
     queryFn: () => gameAccountService.searchGameAccounts(
       query,
@@ -63,7 +63,7 @@ export const useSearchGameAccounts = (
       minPrice,
       maxPrice,
       isAvailable,
-      page,
+      pageNumber,
       pageSize
     ),
     enabled,
@@ -73,7 +73,7 @@ export const useSearchGameAccounts = (
 // Create game account mutation
 export const useCreateGameAccount = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (payload: CreateGameAccountRequest) => gameAccountService.createGameAccount(payload),
     onSuccess: () => {
@@ -87,9 +87,9 @@ export const useCreateGameAccount = () => {
 // Update game account mutation
 export const useUpdateGameAccount = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: UpdateGameAccountRequest }) => 
+    mutationFn: ({ id, payload }: { id: string; payload: UpdateGameAccountRequest }) =>
       gameAccountService.updateGameAccount(id, payload),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.gameAccounts] });
@@ -103,7 +103,7 @@ export const useUpdateGameAccount = () => {
 // Delete game account mutation
 export const useDeleteGameAccount = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (id: string) => gameAccountService.deleteGameAccount(id),
     onSuccess: () => {

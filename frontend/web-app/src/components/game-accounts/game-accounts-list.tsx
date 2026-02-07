@@ -7,7 +7,7 @@ import {
   useDeleteGameAccount,
 } from "@/hooks/useGameAccounts";
 import { useCategories } from "@/hooks/useCategories";
-import { GameAccountDto } from "@/types/generated-api";
+import { GameAccountDto, CategoryDto } from "@/types/generated-api";
 
 interface GameAccountsListProps {
   categoryId?: string;
@@ -52,8 +52,8 @@ export const GameAccountsList = ({
   };
 
   const getCategoryName = (categoryId: string) => {
-    const category = categoriesData?.data?.data?.find(
-      (c) => c.id === categoryId,
+    const category = categoriesData?.items?.find(
+      (c: CategoryDto) => c.id === categoryId,
     );
     return category?.name || "Unknown Category";
   };
@@ -110,7 +110,14 @@ export const GameAccountsList = ({
     );
   }
 
-  const gameAccounts = gameAccountsData?.data?.data || [];
+  const gameAccounts = Array.isArray(gameAccountsData) 
+    ? gameAccountsData 
+    : [];
+  
+  // Client-side pagination since backend doesn't support it yet
+  const totalCount = gameAccounts.length;
+  const totalPages = Math.ceil(totalCount / pageSize);
+  const paginatedAccounts = gameAccounts.slice((page - 1) * pageSize, page * pageSize);
 
   return (
     <div className="space-y-6">
@@ -123,141 +130,130 @@ export const GameAccountsList = ({
               : "All Game Accounts"}
           </h2>
           <p className="text-sm text-gray-600 mt-1">
-            Tổng cộng: {gameAccountsData?.data?.totalCount || 0} game accounts
+            Tổng cộng: {totalCount} game accounts
           </p>
         </div>
       </div>
 
-      {/* Game Accounts Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {gameAccounts.map((gameAccount) => (
-          <div
-            key={gameAccount.id}
-            className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden"
-          >
-            {/* Image */}
-            <div className="aspect-w-16 aspect-h-9 bg-gray-200">
-              <div className="w-full h-48 bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center">
-                <svg
-                  className="w-12 h-12 text-white"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path d="M4 3a2 2 0 00-2 2v1.816a2 2 0 00.797 1.599l2.5 1.875A2 2 0 008 9.816V15a1 1 0 102 0V9.816a2 2 0 002.703-.375l2.5-1.875A2 2 0 0016 6.816V5a2 2 0 00-2-2H4z" />
-                </svg>
-              </div>
-            </div>
-
-            <div className="p-4">
-              {/* Title */}
-              <h3 className="font-semibold text-lg text-gray-900 mb-2 line-clamp-2">
-                {gameAccount.game}
-              </h3>
-
-              {/* Category Badge */}
-              <div className="mb-3">
-                <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                  {getCategoryName(gameAccount.categoryId)}
-                </span>
-              </div>
-
-              {/* Account Name */}
-              <p className="text-gray-600 text-sm mb-3">
-                Account: {gameAccount.accountName}
-              </p>
-
-              {/* Price and Status */}
-              <div className="flex justify-between items-center mb-4">
-                <div>
-                  <p className="text-2xl font-bold text-green-600">
-                    {formatPrice(gameAccount.price)}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {gameAccount.isAvailable ? (
-                      <span className="text-green-600">● Có sẵn</span>
-                    ) : (
-                      <span className="text-red-600">● Đã bán</span>
-                    )}
-                  </p>
-                </div>
-              </div>
-
-              {/* Account Details */}
-              <div className="text-xs text-gray-500 space-y-1 mb-4">
-                <div className="flex justify-between">
-                  <span>Account:</span>
-                  <span className="font-mono">{gameAccount.accountName}</span>
-                </div>
-
-                {gameAccount.rank && (
-                  <div className="flex justify-between">
-                    <span>Rank:</span>
-                    <span className="font-semibold">{gameAccount.rank}</span>
+      {/* Game Accounts Table */}
+      <div className="bg-white shadow-md rounded-lg overflow-hidden">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Game / Account
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Category
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Giá
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Trạng thái
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Ngày tạo
+              </th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Thao tác
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {paginatedAccounts.map((gameAccount) => (
+              <tr key={gameAccount.id}>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex items-center">
+                    <div className="h-10 w-16 flex-shrink-0 bg-gray-100 rounded overflow-hidden relative">
+                      {gameAccount.images && gameAccount.images.length > 0 ? (
+                        <img
+                          src={gameAccount.images[0]}
+                          alt={gameAccount.game}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex items-center justify-center h-full w-full text-gray-400">
+                          <svg
+                            className="h-6 w-6"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path d="M4 3a2 2 0 00-2 2v1.816a2 2 0 00.797 1.599l2.5 1.875A2 2 0 008 9.816V15a1 1 0 102 0V9.816a2 2 0 002.703-.375l2.5-1.875A2 2 0 0016 6.816V5a2 2 0 00-2-2H4z" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                    <div className="ml-4">
+                      <div className="text-sm font-medium text-gray-900">
+                        {gameAccount.game}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {gameAccount.accountName}
+                      </div>
+                      {gameAccount.rank && (
+                        <div className="text-xs text-gray-400">
+                          Rank: {gameAccount.rank}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                )}
-              </div>
-
-              {/* Actions */}
-              <div className="flex space-x-2">
-                {onViewDetails && (
-                  <button
-                    onClick={() => onViewDetails(gameAccount)}
-                    className="flex-1 bg-blue-600 text-white py-2 px-3 rounded-md hover:bg-blue-700 transition-colors text-sm"
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                    {getCategoryName(gameAccount.categoryId)}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm font-medium text-gray-900">
+                    {formatPrice(gameAccount.price)}
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span
+                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      gameAccount.isAvailable
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
+                    }`}
                   >
-                    Xem chi tiết
-                  </button>
-                )}
-
-                <div className="flex space-x-1">
+                    {gameAccount.isAvailable ? "Có sẵn" : "Đã bán"}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {new Date(gameAccount.createdAt || "").toLocaleDateString(
+                    "vi-VN"
+                  )}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  {onViewDetails && (
+                    <button
+                      onClick={() => onViewDetails(gameAccount)}
+                      className="text-indigo-600 hover:text-indigo-900 mr-3"
+                    >
+                      Chi tiết
+                    </button>
+                  )}
                   {onEdit && (
                     <button
                       onClick={() => onEdit(gameAccount)}
-                      className="p-2 text-gray-600 hover:bg-gray-100 rounded"
-                      title="Chỉnh sửa"
+                      className="text-green-600 hover:text-green-900 mr-3"
                     >
-                      <svg
-                        className="w-4 h-4"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                      </svg>
+                      Sửa
                     </button>
                   )}
-
                   <button
                     onClick={() => handleDelete(gameAccount.id)}
                     disabled={deleteGameAccount.isPending}
-                    className="p-2 text-red-600 hover:bg-red-100 rounded disabled:opacity-50"
-                    title="Xóa"
+                    className="text-red-600 hover:text-red-900 disabled:opacity-50"
                   >
-                    <svg
-                      className="w-4 h-4"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
+                    Xóa
                   </button>
-                </div>
-              </div>
-
-              {/* Created Date */}
-              <div className="mt-3 pt-3 border-t border-gray-100">
-                <p className="text-xs text-gray-400">
-                  Đăng ngày:{" "}
-                  {new Date(gameAccount.createdAt || "").toLocaleDateString(
-                    "vi-VN",
-                  )}
-                </p>
-              </div>
-            </div>
-          </div>
-        ))}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       {/* Empty State */}
@@ -288,7 +284,7 @@ export const GameAccountsList = ({
       )}
 
       {/* Pagination */}
-      {gameAccountsData?.data && gameAccountsData.data.totalPages > 1 && (
+      {totalPages > 1 && (
         <div className="flex justify-center items-center space-x-4 mt-8">
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
@@ -299,16 +295,16 @@ export const GameAccountsList = ({
           </button>
 
           <span className="text-sm text-gray-700">
-            Trang {page} / {gameAccountsData.data?.totalPages}
+            Trang {page} / {totalPages}
           </span>
 
           <button
             onClick={() =>
               setPage((p) =>
-                Math.min(gameAccountsData.data?.totalPages || 1, p + 1),
+                Math.min(totalPages || 1, p + 1),
               )
             }
-            disabled={page === gameAccountsData.data?.totalPages}
+            disabled={page === totalPages}
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Sau

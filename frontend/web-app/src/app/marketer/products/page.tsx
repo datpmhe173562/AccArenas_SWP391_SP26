@@ -16,7 +16,6 @@ export default function MarketerProductsPage() {
                 </div>
 
                 <SearchGameAccounts />
-                <GameAccountsList />
             </div>
         </MarketerLayout>
     );

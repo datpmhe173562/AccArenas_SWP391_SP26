@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using AccArenas.Api.Application.DTOs;
+using AccArenas.Api.Application.Exceptions;
 using AccArenas.Api.Application.Services;
 using AccArenas.Api.Domain.Interfaces;
 using AccArenas.Api.Domain.Models;
@@ -58,7 +60,7 @@ namespace AccArenas.Api.Controllers
 
             if (category == null)
             {
-                return NotFound($"Category with ID {id} not found");
+                throw new ApiException($"Category with ID {id} not found", HttpStatusCode.NotFound);
             }
 
             var categoryDto = _mappingService.ToDto(category);
@@ -67,12 +69,12 @@ namespace AccArenas.Api.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "MarketingStaff")]
         public async Task<ActionResult<CategoryDto>> CreateCategory(CreateCategoryRequest request)
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                throw new ApiException("Dữ liệu không hợp lệ", HttpStatusCode.BadRequest);
             }
 
             try
@@ -86,7 +88,7 @@ namespace AccArenas.Api.Controllers
 
                 if (existingCategory != null)
                 {
-                    return BadRequest("Category with this name already exists");
+                    throw new ApiException("Category with this name already exists", HttpStatusCode.BadRequest);
                 }
 
                 var category = _mappingService.ToEntity(request);
@@ -106,12 +108,12 @@ namespace AccArenas.Api.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "MarketingStaff")]
         public async Task<IActionResult> UpdateCategory(Guid id, UpdateCategoryRequest request)
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                throw new ApiException("Invalid model state", HttpStatusCode.BadRequest);
             }
 
             try
@@ -121,7 +123,7 @@ namespace AccArenas.Api.Controllers
                 var category = await _unitOfWork.Categories.GetByIdAsync(id);
                 if (category == null)
                 {
-                    return NotFound($"Category with ID {id} not found");
+                    throw new ApiException($"Category with ID {id} not found", HttpStatusCode.NotFound);
                 }
 
                 // Check if new name conflicts with existing category
@@ -133,7 +135,7 @@ namespace AccArenas.Api.Controllers
 
                     if (existingCategory != null)
                     {
-                        return BadRequest("Category with this name already exists");
+                        throw new ApiException("Category with this name already exists", HttpStatusCode.BadRequest);
                     }
                 }
 
@@ -152,7 +154,7 @@ namespace AccArenas.Api.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "MarketingStaff")]
         public async Task<IActionResult> DeleteCategory(Guid id)
         {
             try
@@ -162,7 +164,7 @@ namespace AccArenas.Api.Controllers
                 var category = await _unitOfWork.Categories.GetByIdAsync(id);
                 if (category == null)
                 {
-                    return NotFound($"Category with ID {id} not found");
+                    throw new ApiException($"Category with ID {id} not found", HttpStatusCode.NotFound);
                 }
 
                 // Check if category is being used by any game accounts
@@ -171,8 +173,12 @@ namespace AccArenas.Api.Controllers
                 );
                 if (gameAccountsCount > 0)
                 {
-                    return BadRequest("Cannot delete category that is being used by game accounts");
+                    throw new ApiException(
+                        $"Không thể xóa danh mục này vì đang có {gameAccountsCount} sản phẩm thuộc danh mục. Vui lòng xóa hoặc chuyển các sản phẩm sang danh mục khác trước.",
+                        HttpStatusCode.BadRequest
+                    );
                 }
+
 
                 _unitOfWork.Categories.Delete(category);
                 await _unitOfWork.CommitTransactionAsync();
@@ -197,7 +203,7 @@ namespace AccArenas.Api.Controllers
         }
 
         [HttpPatch("{id}/toggle-status")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "MarketingStaff")]
         public async Task<IActionResult> ToggleCategoryStatus(Guid id)
         {
             try
@@ -207,7 +213,7 @@ namespace AccArenas.Api.Controllers
                 var category = await _unitOfWork.Categories.GetByIdAsync(id);
                 if (category == null)
                 {
-                    return NotFound($"Category with ID {id} not found");
+                    throw new ApiException($"Category with ID {id} not found", HttpStatusCode.NotFound);
                 }
 
                 category.IsActive = !category.IsActive;
