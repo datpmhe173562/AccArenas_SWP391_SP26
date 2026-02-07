@@ -173,7 +173,7 @@ namespace AccArenas.Api.Controllers
         /// Tạo khuyến mãi mới
         /// </summary>
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+       [Authorize(Roles = "MarketingStaff")]
         public async Task<ActionResult<PromotionDto>> CreatePromotion(
             CreatePromotionRequest request
         )
@@ -234,7 +234,7 @@ namespace AccArenas.Api.Controllers
         /// Cập nhật khuyến mãi
         /// </summary>
         [HttpPut("{id:guid}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "MarketingStaff")]
         public async Task<ActionResult<PromotionDto>> UpdatePromotion(
             Guid id,
             UpdatePromotionRequest request
@@ -291,7 +291,7 @@ namespace AccArenas.Api.Controllers
         /// Xóa khuyến mãi
         /// </summary>
         [HttpDelete("{id:guid}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "MarketingStaff")]
         public async Task<IActionResult> DeletePromotion(Guid id)
         {
             try
@@ -320,7 +320,7 @@ namespace AccArenas.Api.Controllers
         /// Bật/tắt khuyến mãi
         /// </summary>
         [HttpPatch("{id:guid}/toggle-status")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "MarketingStaff")]
         public async Task<ActionResult<PromotionDto>> TogglePromotionStatus(Guid id)
         {
             try
