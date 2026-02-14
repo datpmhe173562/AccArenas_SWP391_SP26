@@ -137,7 +137,7 @@ namespace AccArenas.Api.Infrastructure.Data
                     UserName = "customer1",
                     FullName = "Customer One",
                     Password = "Test@123",
-                    Role = "Customer"
+                    Role = "Customer",
                 },
                 new
                 {
@@ -145,7 +145,7 @@ namespace AccArenas.Api.Infrastructure.Data
                     UserName = "customer2",
                     FullName = "Customer Two",
                     Password = "Test@123",
-                    Role = "Customer"
+                    Role = "Customer",
                 },
                 new
                 {
@@ -153,7 +153,7 @@ namespace AccArenas.Api.Infrastructure.Data
                     UserName = "customer",
                     FullName = "Test Customer",
                     Password = "Test@123",
-                    Role = "Customer"
+                    Role = "Customer",
                 },
                 new
                 {
@@ -161,7 +161,7 @@ namespace AccArenas.Api.Infrastructure.Data
                     UserName = "test",
                     FullName = "Test User",
                     Password = "Test@123",
-                    Role = "Customer"
+                    Role = "Customer",
                 },
                 // Sales Staff
                 new
@@ -170,7 +170,7 @@ namespace AccArenas.Api.Infrastructure.Data
                     UserName = "sales",
                     FullName = "Sales Staff",
                     Password = "Test@123",
-                    Role = "SalesStaff"
+                    Role = "SalesStaff",
                 },
                 new
                 {
@@ -178,7 +178,7 @@ namespace AccArenas.Api.Infrastructure.Data
                     UserName = "sales1",
                     FullName = "Sales Staff One",
                     Password = "Test@123",
-                    Role = "SalesStaff"
+                    Role = "SalesStaff",
                 },
                 // Marketing Staff
                 new
@@ -187,7 +187,7 @@ namespace AccArenas.Api.Infrastructure.Data
                     UserName = "marketing",
                     FullName = "Marketing Staff",
                     Password = "Test@123",
-                    Role = "MarketingStaff"
+                    Role = "MarketingStaff",
                 },
                 new
                 {
@@ -195,9 +195,7 @@ namespace AccArenas.Api.Infrastructure.Data
                     UserName = "marketing1",
                     FullName = "Marketing Staff One",
                     Password = "Test@123",
-                    FullName = "Marketing Staff One",
-                    Password = "Test@123",
-                    Role = "MarketingStaff"
+                    Role = "MarketingStaff",
                 },
                 // Moderator
                 new
@@ -206,7 +204,7 @@ namespace AccArenas.Api.Infrastructure.Data
                     UserName = "moderator",
                     FullName = "Moderator User",
                     Password = "Test@123",
-                    Role = "Moderator"
+                    Role = "Moderator",
                 },
             };
 
@@ -366,35 +364,35 @@ namespace AccArenas.Api.Infrastructure.Data
                         Id = Guid.NewGuid(),
                         Name = "League of Legends",
                         Slug = "league-of-legends",
-                        IsActive = true
+                        IsActive = true,
                     },
                     new Category
                     {
                         Id = Guid.NewGuid(),
                         Name = "Valorant",
                         Slug = "valorant",
-                        IsActive = true
+                        IsActive = true,
                     },
                     new Category
                     {
                         Id = Guid.NewGuid(),
                         Name = "PUBG",
                         Slug = "pubg",
-                        IsActive = true
+                        IsActive = true,
                     },
                     new Category
                     {
                         Id = Guid.NewGuid(),
                         Name = "Mobile Legends",
                         Slug = "mobile-legends",
-                        IsActive = true
+                        IsActive = true,
                     },
                     new Category
                     {
                         Id = Guid.NewGuid(),
                         Name = "Liên Quân Mobile",
                         Slug = "lien-quan-mobile",
-                        IsActive = true
+                        IsActive = true,
                     },
                 };
 
@@ -439,7 +437,7 @@ namespace AccArenas.Api.Infrastructure.Data
                             Currency = "VND",
                             IsAvailable = true,
                             CategoryId = lolCategory.Id,
-                            CreatedAt = DateTime.UtcNow
+                            CreatedAt = DateTime.UtcNow,
                         },
                         new GameAccount
                         {
@@ -452,7 +450,7 @@ namespace AccArenas.Api.Infrastructure.Data
                             Currency = "VND",
                             IsAvailable = true,
                             CategoryId = lolCategory.Id,
-                            CreatedAt = DateTime.UtcNow
+                            CreatedAt = DateTime.UtcNow,
                         },
                         new GameAccount
                         {
@@ -465,7 +463,7 @@ namespace AccArenas.Api.Infrastructure.Data
                             Currency = "VND",
                             IsAvailable = true,
                             CategoryId = lolCategory.Id,
-                            CreatedAt = DateTime.UtcNow
+                            CreatedAt = DateTime.UtcNow,
                         },
                         // Valorant accounts
                         new GameAccount
@@ -479,7 +477,7 @@ namespace AccArenas.Api.Infrastructure.Data
                             Currency = "VND",
                             IsAvailable = true,
                             CategoryId = valorantCategory.Id,
-                            CreatedAt = DateTime.UtcNow
+                            CreatedAt = DateTime.UtcNow,
                         },
                         new GameAccount
                         {
@@ -492,7 +490,7 @@ namespace AccArenas.Api.Infrastructure.Data
                             Currency = "VND",
                             IsAvailable = true,
                             CategoryId = valorantCategory.Id,
-                            CreatedAt = DateTime.UtcNow
+                            CreatedAt = DateTime.UtcNow,
                         },
                         // PUBG accounts
                         new GameAccount
@@ -506,7 +504,7 @@ namespace AccArenas.Api.Infrastructure.Data
                             Currency = "VND",
                             IsAvailable = true,
                             CategoryId = pubgCategory.Id,
-                            CreatedAt = DateTime.UtcNow
+                            CreatedAt = DateTime.UtcNow,
                         },
                         new GameAccount
                         {
@@ -519,7 +517,7 @@ namespace AccArenas.Api.Infrastructure.Data
                             Currency = "VND",
                             IsAvailable = false, // Sold account
                             CategoryId = pubgCategory.Id,
-                            CreatedAt = DateTime.UtcNow
+                            CreatedAt = DateTime.UtcNow,
                         },
                     };
 
@@ -547,7 +545,7 @@ namespace AccArenas.Api.Infrastructure.Data
                         StartDate = DateTime.UtcNow,
                         EndDate = DateTime.UtcNow.AddMonths(3),
                         IsActive = true,
-                        CreatedAt = DateTime.UtcNow
+                        CreatedAt = DateTime.UtcNow,
                     },
                     new Promotion
                     {
@@ -558,7 +556,7 @@ namespace AccArenas.Api.Infrastructure.Data
                         StartDate = DateTime.UtcNow,
                         EndDate = DateTime.UtcNow.AddMonths(1),
                         IsActive = true,
-                        CreatedAt = DateTime.UtcNow
+                        CreatedAt = DateTime.UtcNow,
                     },
                     new Promotion
                     {
@@ -569,7 +567,7 @@ namespace AccArenas.Api.Infrastructure.Data
                         StartDate = DateTime.UtcNow,
                         EndDate = DateTime.UtcNow.AddMonths(6),
                         IsActive = true,
-                        CreatedAt = DateTime.UtcNow
+                        CreatedAt = DateTime.UtcNow,
                     },
                     new Promotion
                     {
@@ -580,7 +578,7 @@ namespace AccArenas.Api.Infrastructure.Data
                         StartDate = DateTime.UtcNow.AddMonths(-2),
                         EndDate = DateTime.UtcNow.AddDays(-1),
                         IsActive = false,
-                        CreatedAt = DateTime.UtcNow.AddMonths(-2)
+                        CreatedAt = DateTime.UtcNow.AddMonths(-2),
                     },
                 };
 
