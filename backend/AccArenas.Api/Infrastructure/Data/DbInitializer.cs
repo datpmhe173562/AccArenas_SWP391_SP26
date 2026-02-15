@@ -195,8 +195,6 @@ namespace AccArenas.Api.Infrastructure.Data
                     UserName = "marketing1",
                     FullName = "Marketing Staff One",
                     Password = "Test@123",
-                    FullName = "Marketing Staff One",
-                    Password = "Test@123",
                     Role = "MarketingStaff"
                 },
                 // Moderator
