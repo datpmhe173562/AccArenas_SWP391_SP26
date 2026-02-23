@@ -136,17 +136,68 @@ namespace AccArenas.Tests.Services
         }
 
         [TestMethod]
+        public async Task GenerateTokensAsync_UTCID02_NoRoles_ShouldHaveNoRoleClaims()
+        {
+            // Arrange
+            var user = new ApplicationUser
+            {
+                Id = Guid.NewGuid(),
+                UserName = "noroleuser",
+                Email = "norole@example.com",
+                FullName = "No Role User",
+            };
+
+            // Act
+            var result = await _jwtService.GenerateTokensAsync(user, new List<string>());
+
+            // Assert
+            var token = new JwtSecurityTokenHandler().ReadJwtToken(result.AccessToken);
+            var roleClaims = token.Claims.Where(c => c.Type == ClaimTypes.Role).ToList();
+            Assert.AreEqual(0, roleClaims.Count);
+            UpdateTestResult("AUTH_FUNC01", "UTCID02", "P");
+        }
+
+        [TestMethod]
+        public async Task GenerateTokensAsync_UTCID03_MissingEmailAndFullName_ShouldReturnTokens()
+        {
+            // Arrange
+            var user = new ApplicationUser
+            {
+                Id = Guid.NewGuid(),
+                UserName = "missinginfo",
+                Email = null,
+                FullName = null,
+            };
+
+            // Act
+            var result = await _jwtService.GenerateTokensAsync(user, new List<string>());
+
+            // Assert
+            Assert.IsNotNull(result.AccessToken);
+            var token = new JwtSecurityTokenHandler().ReadJwtToken(result.AccessToken);
+            // Name claim should be absent when FullName is null
+            Assert.IsFalse(token.Claims.Any(c => c.Type == ClaimTypes.Name));
+            UpdateTestResult("AUTH_FUNC01", "UTCID03", "P");
+        }
+
+        [TestMethod]
         public async Task GenerateTokensAsync_UTCID04_WithIpAddress_ShouldReturnTokens()
         {
             // Arrange
             var user = new ApplicationUser { Id = Guid.NewGuid(), UserName = "ipuser" };
-            
+
             // Act
-            var result = await _jwtService.GenerateTokensAsync(user, new List<string>(), "192.168.1.1");
+            var result = await _jwtService.GenerateTokensAsync(
+                user,
+                new List<string>(),
+                "192.168.1.1"
+            );
 
             // Assert
             Assert.IsNotNull(result.AccessToken);
-            var token = await _context.RefreshTokens.FirstOrDefaultAsync(t => t.Token == result.RefreshToken);
+            var token = await _context.RefreshTokens.FirstOrDefaultAsync(t =>
+                t.Token == result.RefreshToken
+            );
             Assert.AreEqual("192.168.1.1", token?.IpAddress);
             UpdateTestResult("AUTH_FUNC01", "UTCID04", "P");
         }
@@ -156,13 +207,20 @@ namespace AccArenas.Tests.Services
         {
             // Arrange
             var user = new ApplicationUser { Id = Guid.NewGuid(), UserName = "deviceuser" };
-            
+
             // Act
-            var result = await _jwtService.GenerateTokensAsync(user, new List<string>(), null, "iPhone 13");
+            var result = await _jwtService.GenerateTokensAsync(
+                user,
+                new List<string>(),
+                null,
+                "iPhone 13"
+            );
 
             // Assert
             Assert.IsNotNull(result.AccessToken);
-            var token = await _context.RefreshTokens.FirstOrDefaultAsync(t => t.Token == result.RefreshToken);
+            var token = await _context.RefreshTokens.FirstOrDefaultAsync(t =>
+                t.Token == result.RefreshToken
+            );
             Assert.AreEqual("iPhone 13", token?.DeviceInfo);
             UpdateTestResult("AUTH_FUNC01", "UTCID05", "P");
         }
@@ -179,11 +237,59 @@ namespace AccArenas.Tests.Services
             var tokenResult = await _jwtService.GenerateTokensAsync(user, new List<string>());
 
             // Act
-            var result = await _jwtService.ValidateRefreshTokenAsync(tokenResult.RefreshToken, Guid.NewGuid().ToString());
+            var result = await _jwtService.ValidateRefreshTokenAsync(
+                tokenResult.RefreshToken,
+                Guid.NewGuid().ToString()
+            );
 
             // Assert
             Assert.IsFalse(result);
             UpdateTestResult("AUTH_FUNC02", "UTCID03", "P");
+        }
+
+        [TestMethod]
+        public async Task ValidateRefreshTokenAsync_UTCID01_ValidToken_ShouldReturnTrue()
+        {
+            // Arrange
+            var user = new ApplicationUser { Id = Guid.NewGuid(), UserName = "user-valid" };
+            var tokenResult = await _jwtService.GenerateTokensAsync(user, new List<string>());
+
+            // Act
+            var result = await _jwtService.ValidateRefreshTokenAsync(
+                tokenResult.RefreshToken,
+                user.Id.ToString()
+            );
+
+            // Assert
+            Assert.IsTrue(result);
+            UpdateTestResult("AUTH_FUNC02", "UTCID01", "P");
+        }
+
+        [TestMethod]
+        public async Task ValidateRefreshTokenAsync_UTCID02_ExpiredToken_ShouldReturnFalse()
+        {
+            // Arrange
+            var user = new ApplicationUser { Id = Guid.NewGuid(), UserName = "user-expired" };
+            var expiredToken = new RefreshToken
+            {
+                Id = Guid.NewGuid(),
+                Token = "expired-token",
+                UserId = user.Id,
+                ExpiryDate = DateTime.UtcNow.AddDays(-1),
+                CreatedAt = DateTime.UtcNow.AddDays(-2),
+            };
+            _context.RefreshTokens.Add(expiredToken);
+            await _context.SaveChangesAsync();
+
+            // Act
+            var result = await _jwtService.ValidateRefreshTokenAsync(
+                expiredToken.Token,
+                user.Id.ToString()
+            );
+
+            // Assert
+            Assert.IsFalse(result);
+            UpdateTestResult("AUTH_FUNC02", "UTCID02", "P");
         }
 
         [TestMethod]
@@ -195,7 +301,10 @@ namespace AccArenas.Tests.Services
             await _jwtService.RevokeRefreshTokenAsync(tokenResult.RefreshToken);
 
             // Act
-            var result = await _jwtService.ValidateRefreshTokenAsync(tokenResult.RefreshToken, user.Id.ToString());
+            var result = await _jwtService.ValidateRefreshTokenAsync(
+                tokenResult.RefreshToken,
+                user.Id.ToString()
+            );
 
             // Assert
             Assert.IsFalse(result);
@@ -206,7 +315,10 @@ namespace AccArenas.Tests.Services
         public async Task ValidateRefreshTokenAsync_UTCID05_NullToken_ShouldReturnFalse()
         {
             // Act
-            var result = await _jwtService.ValidateRefreshTokenAsync(null!, Guid.NewGuid().ToString());
+            var result = await _jwtService.ValidateRefreshTokenAsync(
+                null!,
+                Guid.NewGuid().ToString()
+            );
 
             // Assert
             Assert.IsFalse(result);
@@ -228,7 +340,9 @@ namespace AccArenas.Tests.Services
             await _jwtService.RevokeRefreshTokenAsync(tokenResult.RefreshToken);
 
             // Assert
-            var token = await _context.RefreshTokens.FirstOrDefaultAsync(t => t.Token == tokenResult.RefreshToken);
+            var token = await _context.RefreshTokens.FirstOrDefaultAsync(t =>
+                t.Token == tokenResult.RefreshToken
+            );
             Assert.IsTrue(token?.IsRevoked);
             UpdateTestResult("AUTH_FUNC03", "UTCID01", "P");
         }
@@ -253,7 +367,9 @@ namespace AccArenas.Tests.Services
             await _jwtService.RevokeRefreshTokenAsync(tokenResult.RefreshToken);
 
             // Assert
-            var token = await _context.RefreshTokens.FirstOrDefaultAsync(t => t.Token == tokenResult.RefreshToken);
+            var token = await _context.RefreshTokens.FirstOrDefaultAsync(t =>
+                t.Token == tokenResult.RefreshToken
+            );
             Assert.IsTrue(token?.IsRevoked);
             UpdateTestResult("AUTH_FUNC03", "UTCID03", "P");
         }
