@@ -21,6 +21,9 @@ const menuItems: MenuItem[] = [
     { label: "Quản lý sản phẩm", href: "/marketer/products" },
     { label: "Quản lý danh mục", href: "/marketer/categories" },
     { label: "Quản lý voucher", href: "/marketer/promotions" },
+    { label: "Quản lý blog", href: "/marketer/blogs" },
+    { label: "Quản lý banner", href: "/marketer/banners" },
+    { label: "Quản lý slider", href: "/marketer/sliders" },
 ];
 
 export default function MarketerLayout({ children }: MarketerLayoutProps) {

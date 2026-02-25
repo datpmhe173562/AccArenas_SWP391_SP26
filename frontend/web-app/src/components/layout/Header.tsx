@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useLogout } from "@/hooks/useAuth";
 import { canAccessAdmin, canAccessMarketer, getManagementRoute, isAdmin } from "@/lib/roleUtils";
@@ -8,6 +9,7 @@ import { canAccessAdmin, canAccessMarketer, getManagementRoute, isAdmin } from "
 export default function Header() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const logout = useLogout();
+  const router = useRouter();
 
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50">
@@ -73,7 +75,7 @@ export default function Header() {
                   </Link>
                 )}
                 <button
-                  onClick={() => logout.logout()}
+                  onClick={async () => { await logout.logout(); router.push('/'); }}
                   disabled={logout.loading}
                   className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md transition-colors disabled:opacity-50"
                 >
