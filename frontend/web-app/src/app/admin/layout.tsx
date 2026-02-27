@@ -11,7 +11,7 @@ export default function AdminLayoutWrapper({
     children,
 }: AdminLayoutWrapperProps) {
     return (
-        <ProtectedRoute requiredRoles={["Admin"]} fallbackPath="/unauthorized">
+        <ProtectedRoute requiredRoles={["Admin"]}>
             {children}
         </ProtectedRoute>
     );

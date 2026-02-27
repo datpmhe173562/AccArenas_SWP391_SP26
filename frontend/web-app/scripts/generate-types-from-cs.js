@@ -21,26 +21,26 @@ const typeMapping = {
 };
 
 function convertCSharpToTypeScript(csharpType) {
-  const isOptional = csharpType.endsWith('?');
-  const baseType = isOptional ? csharpType.slice(0, -1) : csharpType;
+  const isNullable = csharpType.endsWith('?');
+  const baseType = csharpType.replace(/\?$/, '');
 
-  let tsType;
-  // Handle array types
-  if (baseType.includes('List<') || baseType.includes('IList<') || baseType.includes('IEnumerable<')) {
-    const innerType = baseType.match(/<(.+)>/)?.[1];
-    if (innerType === 'T') {
-      tsType = 'T[]';
-    } else {
-      const tsInnerType = typeMapping[innerType] || innerType;
-      tsType = `${tsInnerType}[]`;
-    }
-  } else if (baseType === 'T') {
-    tsType = 'T';
-  } else {
-    tsType = typeMapping[baseType] || baseType;
+  const collectionMatch = baseType.match(/^(?:IEnumerable|List|IList)<(.+)>$/);
+  if (collectionMatch) {
+    const innerType = collectionMatch[1];
+    const tsInnerType = typeMapping[innerType] || innerType;
+    return isNullable ? `${tsInnerType}[] | undefined` : `${tsInnerType}[]`;
   }
 
-  return isOptional ? `${tsType} | undefined` : tsType;
+  if (baseType === 'T') {
+    return isNullable ? 'T | undefined' : 'T';
+  }
+
+  if (typeMapping[baseType] !== undefined) {
+    return isNullable ? `${typeMapping[baseType]} | undefined` : typeMapping[baseType];
+  }
+
+  // Preserve PascalCase for custom/unknown types (e.g. UserInfo stays UserInfo)
+  return isNullable ? `${baseType} | undefined` : baseType;
 }
 
 function parseCSharpFile(filePath) {
@@ -57,16 +57,29 @@ function parseCSharpFile(filePath) {
     const classBody = match[3];
 
     const properties = [];
-    const propRegex = /public\s+([^=\s]+)\s+(\w+)\s*{\s*get;\s*set;\s*}(?:\s*=\s*[^;]+;)?/g;
+
+    // Match auto-properties: public Type Name { get; set; } = ...;
+    const propRegex = /public\s+([^=\s]+)\s+(\w+)\s*{\s*get;\s*(?:set;\s*)?}(?:\s*=\s*[^;]+;)?/g;
     let propMatch;
 
     while ((propMatch = propRegex.exec(classBody)) !== null) {
       const propType = propMatch[1].trim();
       const propName = propMatch[2];
-
-      // Convert property name to camelCase
       const camelCaseName = propName.charAt(0).toLowerCase() + propName.slice(1);
+      properties.push({
+        name: camelCaseName,
+        type: convertCSharpToTypeScript(propType),
+        optional: propType.includes('?')
+      });
+    }
 
+    // Match expression-body computed properties: public Type Name =>
+    const exprPropRegex = /public\s+([^=\s]+)\s+(\w+)\s*=>/g;
+    let exprMatch;
+    while ((exprMatch = exprPropRegex.exec(classBody)) !== null) {
+      const propType = exprMatch[1].trim();
+      const propName = exprMatch[2];
+      const camelCaseName = propName.charAt(0).toLowerCase() + propName.slice(1);
       properties.push({
         name: camelCaseName,
         type: convertCSharpToTypeScript(propType),
