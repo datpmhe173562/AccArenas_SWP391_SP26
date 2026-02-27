@@ -39,6 +39,24 @@ namespace AccArenas.Api.Application.Services
         IEnumerable<GameAccountDto> ToDto(IEnumerable<GameAccount> gameAccounts);
         GameAccount ToEntity(CreateGameAccountRequest request);
         void UpdateEntity(GameAccount gameAccount, UpdateGameAccountRequest request);
+
+        // BlogPost mappings
+        BlogPostDto ToDto(BlogPost blogPost);
+        IEnumerable<BlogPostDto> ToDto(IEnumerable<BlogPost> blogPosts);
+        BlogPost ToEntity(CreateBlogPostRequest request);
+        void UpdateEntity(BlogPost blogPost, UpdateBlogPostRequest request);
+
+        // Banner mappings
+        BannerDto ToDto(Banner banner);
+        IEnumerable<BannerDto> ToDto(IEnumerable<Banner> banners);
+        Banner ToEntity(CreateBannerRequest request);
+        void UpdateEntity(Banner banner, UpdateBannerRequest request);
+
+        // Slider mappings
+        SliderDto ToDto(Slider slider);
+        IEnumerable<SliderDto> ToDto(IEnumerable<Slider> sliders);
+        Slider ToEntity(CreateSliderRequest request);
+        void UpdateEntity(Slider slider, UpdateSliderRequest request);
     }
 
     public class MappingService : IMappingService
@@ -144,5 +162,53 @@ namespace AccArenas.Api.Application.Services
 
         public void UpdateEntity(GameAccount gameAccount, UpdateGameAccountRequest request) =>
             _mapper.Map(request, gameAccount);
+
+        // BlogPost mappings
+        public BlogPostDto ToDto(BlogPost blogPost) => _mapper.Map<BlogPostDto>(blogPost);
+
+        public IEnumerable<BlogPostDto> ToDto(IEnumerable<BlogPost> blogPosts) =>
+            _mapper.Map<IEnumerable<BlogPostDto>>(blogPosts);
+
+        public BlogPost ToEntity(CreateBlogPostRequest request)
+        {
+            var blogPost = _mapper.Map<BlogPost>(request);
+            blogPost.Id = Guid.NewGuid();
+            return blogPost;
+        }
+
+        public void UpdateEntity(BlogPost blogPost, UpdateBlogPostRequest request) =>
+            _mapper.Map(request, blogPost);
+
+        // Banner mappings
+        public BannerDto ToDto(Banner banner) => _mapper.Map<BannerDto>(banner);
+
+        public IEnumerable<BannerDto> ToDto(IEnumerable<Banner> banners) =>
+            _mapper.Map<IEnumerable<BannerDto>>(banners);
+
+        public Banner ToEntity(CreateBannerRequest request)
+        {
+            var banner = _mapper.Map<Banner>(request);
+            banner.Id = Guid.NewGuid();
+            return banner;
+        }
+
+        public void UpdateEntity(Banner banner, UpdateBannerRequest request) =>
+            _mapper.Map(request, banner);
+
+        // Slider mappings
+        public SliderDto ToDto(Slider slider) => _mapper.Map<SliderDto>(slider);
+
+        public IEnumerable<SliderDto> ToDto(IEnumerable<Slider> sliders) =>
+            _mapper.Map<IEnumerable<SliderDto>>(sliders);
+
+        public Slider ToEntity(CreateSliderRequest request)
+        {
+            var slider = _mapper.Map<Slider>(request);
+            slider.Id = Guid.NewGuid();
+            return slider;
+        }
+
+        public void UpdateEntity(Slider slider, UpdateSliderRequest request) =>
+            _mapper.Map(request, slider);
     }
 }

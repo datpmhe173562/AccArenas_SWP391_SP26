@@ -1,6 +1,6 @@
 import { AuthResponse, LoginRequest, RegisterRequest } from '@/types/generated-api';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://localhost:7171/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5089/api';
 
 export class ApiError extends Error {
   constructor(public status: number, message: string, public errors?: Record<string, string>) {

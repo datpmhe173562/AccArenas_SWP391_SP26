@@ -21,11 +21,12 @@ export default function ProtectedRoute({
   useEffect(() => {
     if (!isLoading) {
       if (!isAuthenticated) {
+        // Not logged in → go to login page
         router.push(fallbackPath);
         return;
       }
 
-      // Check if user has required roles
+      // Logged in but missing required role → go to unauthorized
       if (requiredRoles.length > 0 && user) {
         const hasRequiredRole = requiredRoles.some((role) =>
           user.roles.includes(role),
