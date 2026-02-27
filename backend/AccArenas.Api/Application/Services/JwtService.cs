@@ -74,12 +74,14 @@ namespace AccArenas.Api.Application.Services
             }
 
             var expirationMinutes = int.Parse(jwtSettings["ExpirationMinutes"] ?? "30");
-            var expiresAt = DateTime.UtcNow.AddMinutes(expirationMinutes);
+            var now = DateTime.UtcNow;
+            var expiresAt = now.AddMinutes(expirationMinutes);
 
             var token = new JwtSecurityToken(
                 issuer: jwtSettings["Issuer"] ?? "AccArenas",
                 audience: jwtSettings["Audience"] ?? "AccArenas-Users",
                 claims: claims,
+                notBefore: now,
                 expires: expiresAt,
                 signingCredentials: credentials
             );
