@@ -11,7 +11,7 @@ export default function MarketerLayoutWrapper({
     children,
 }: MarketerLayoutWrapperProps) {
     return (
-        <ProtectedRoute requiredRoles={["MarketingStaff", "Admin"]} fallbackPath="/unauthorized">
+        <ProtectedRoute requiredRoles={["MarketingStaff", "Admin"]}>
             {children}
         </ProtectedRoute>
     );
