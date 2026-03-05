@@ -72,6 +72,9 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 // Email Service
 builder.Services.AddScoped<IEmailService, EmailService>();
 
+// VNPay Service
+builder.Services.AddScoped<IVnPayService, VnPayService>();
+
 // Mapping Service
 builder.Services.AddScoped<IMappingService, MappingService>();
 
