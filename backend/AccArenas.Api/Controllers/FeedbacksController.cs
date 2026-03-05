@@ -46,7 +46,7 @@ namespace AccArenas.Api.Controllers
                 UserId = userId,
                 OrderId = request.OrderId,
                 Rating = request.Rating,
-                Comment = request.Comment,
+                Comment = request.Comment ?? string.Empty,
                 CreatedAt = DateTime.UtcNow
             };
 
