@@ -1,0 +1,56 @@
+Screen/Function,Description,In Charge,RDS,Status,Notes / Updates
+Xác thực - Đăng ký (UC-01),"API đăng ký tài khoản
+Trang Đăng ký; form; thông báo xác thực (Register; Verification)",Lê Đức Cường,I-4,Done,
+Xác thực - Đăng nhập (UC-02),"API đăng nhập 
+Trang Đăng nhập",Lê Đức Cường,I-4,Done,
+Xác thực - Quên mật khẩu (UC-03),"API yêu cầu reset và đặt lại mật khẩu
+Trang Quên mật khẩu; Trang Đặt lại (Forgot Password; Reset)",Mạnh Đạt,I-4,Done,
+Xác thực - Đăng xuất (UC-13),Chức năng Đăng xuất; xóa token (Logout),Mạnh Đạt,I-4,Done,
+Quản lý sản phẩm (UC-20),"API CRUD sản phẩm (List; Create; Edit; Detail) 
+Trang quản lý sản phẩm (List; Create; Edit; Detail)",Trần Việt Hoàng,I-4,Done,
+Quản lý danh mục (UC-25),"API CRUD danh mục (List; Create; Edit; Detail)
+Trang quản lý danh mục (List; Create; Edit; Detail)",Trần Việt Hoàng,I-4,Done,
+Quản lý người dùng (UC-26),"API CRUD user (List; Create; Edit; Detail)
+Trang quản lý user (List; Create; Edit; Detail)",Đặng Đức Hải,I-4,Done,
+Quản lý vai trò (UC-28),"API CRUD role (List; Create; Edit; Detail)
+Trang quản lý role (List; Create; Edit; Detail)",Đặng Đức Hải,I-4,Done,
+Gán/đổi vai trò (UC-27),"API gán/đổi role (Assign Role API)
+UI gán/đổi role (Assign Role UI)",Vũ Thành Trung,I-4,Done,
+Quản lý khuyến mãi (UC-21),"API CRUD khuyến mãi/voucher (List; Create; Edit; Detail)
+Trang quản lý khuyến mãi (List; Create; Edit; Detail)",Vũ Thành Trung,I-4,Done,
+Quản lý blog (UC-22),"CRUD bài viết (List; Create; Edit; Detail)
+Trang quản lý blog (List; Create; Edit; Detail)",Lê Đức Cường,I-4,Done,
+Quản lý banner (UC-23),"CRUD banner (List; Create; Edit; Detail)
+Trang quản lý banner (List; Create; Edit; Detail)",Mạnh Đạt,I-4,Done,
+Quản lý slider (UC-24),"CRUD slider (List; Create; Edit; Detail)
+Trang quản lý slider (List; Create; Edit; Detail)",Vũ Thành Trung,I-4,Done,
+Cấu hình hệ thống (UC-30),"API cấu hình tham số (Settings API)
+Trang cấu hình hệ thống (Settings UI)",N/A,I-4,N/A,
+Đơn được phân công (UC-14),"API danh sách đơn theo nhân viên (Assigned Orders API)
+Trang Đơn được phân công (Assigned Orders)",N/A,I-4,N/A,
+Theo dõi thực hiện (UC-15),"API theo dõi/tracking trạng thái (Fulfillment API)
+Trang theo dõi tiến trình (Fulfillment View)",N/A,I-4,N/A,
+Hỗ trợ khách hàng (UC-17),"Trang hỗ trợ khách hàng (Support Tickets)
+API quản lý ticket/inquiry (Inquiries API)",N/A,I-4,N/A,
+Danh mục - Tài khoản game (UC-04),"Trang Danh sách + Bộ lọc + Chi tiết (Listing; Filters; Detail)
+API danh sách + tìm kiếm + chi tiết (List API; Detail API)",N/A,I-4,N/A,
+Khuyến mãi (UC-05),"API danh sách khuyến mãi/voucher (Promotions API)
+Trang Khuyến mãi (Promotions Page)",N/A,I-4,N/A,
+Hồ sơ cá nhân (UC-06),"Trang Hồ sơ (xem/cập nhật) (Profile View; Edit)
+API lấy/cập nhật hồ sơ (Profile API)",N/A,I-4,N/A,
+Lịch sử đơn hàng (UC-07),"Trang Lịch sử đơn hàng (Orders List)
+API danh sách đơn theo user (Orders List API)",N/A,I-4,N/A,
+Chi tiết đơn hàng (UC-08),"API chi tiết đơn (Order Detail API)
+Trang Chi tiết đơn (Order Detail)",N/A,I-4,N/A,
+Phản hồi/Đánh giá (UC-12),"Trang gửi phản hồi (Feedback Form)
+API tạo/lấy phản hồi theo đơn (Feedback API)",N/A,I-4,N/A,
+Mua tài khoản (UC-09),"API tạo đơn hàng; kiểm tra tồn tại/điều kiện (Create Order)
+Flow chọn tài khoản → Checkout (Product Detail; Checkout)",N/A,I-4,N/A,
+Thanh toán online (UC-10),"Tích hợp cổng thanh toán + webhook (Payment API; Webhook)
+Trang trạng thái thanh toán (Payment Status)",N/A,I-4,N/A,
+Giao thông tin tài khoản (UC-11),Dịch vụ gửi email thông tin tài khoản + xác nhận (Email Service),N/A,I-4,N/A,
+Nền tảng job/background,Thiết lập background jobs (email; webhook retry),N/A,I-4,N/A,
+Kiểm thử & bảo mật,Unit/API tests cho Auth/Orders/Payments,N/A,I-4,N/A,
+Thống kê doanh số cá nhân (UC-18),Trang thống kê theo nhân viên (Sales Stats),N/A,I-4,N/A,
+Báo cáo tài chính (UC-29),Tổng hợp doanh thu; chi phí (Financial Reports API),N/A,I-4,N/A,
+Phân tích marketing (UC-19),Trang analytics cho sản phẩm/khuyến mãi/tương tác (Marketing Analytics),N/A,I-4,N/A,

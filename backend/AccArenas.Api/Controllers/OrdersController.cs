@@ -158,7 +158,6 @@ namespace AccArenas.Api.Controllers
             await _unitOfWork.Orders.AddAsync(order);
 
             // 3. Mark Game Accounts as Pending or Unavailale (Locking them) 
-            // Depending on business rules, we could lock them now. 
             foreach (var acc in gameAccounts)
             {
                 acc.IsAvailable = false;
