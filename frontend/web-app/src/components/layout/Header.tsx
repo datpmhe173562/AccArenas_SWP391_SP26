@@ -59,12 +59,12 @@ export default function Header() {
               <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
             ) : isAuthenticated ? (
               <div className="flex items-center space-x-4">
-                <span className="text-sm text-gray-700">
+                <Link href="/profile" className="text-sm text-gray-700 hover:text-indigo-600 transition-colors">
                   Xin chào,{" "}
                   <span className="font-semibold">
                     {user?.userName || user?.email}
                   </span>
-                </span>
+                </Link>
 
                 {(canAccessAdmin(user) || canAccessMarketer(user)) && (
                   <Link
