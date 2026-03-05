@@ -1,4 +1,4 @@
-import { AuthResponse, LoginRequest, RegisterRequest } from '@/types/generated-api';
+import { AuthResponse, LoginRequest, RegisterRequest, UpdateProfileRequest } from '@/types/generated-api';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5089/api';
 
@@ -146,6 +146,25 @@ class AuthService {
       if (response.refreshToken) {
         TokenManager.setRefreshToken(response.refreshToken);
       }
+    }
+
+    return response;
+  }
+
+  async getProfile(): Promise<AuthResponse> {
+    return this.request<AuthResponse>('/auth/profile', {
+      method: 'GET',
+    });
+  }
+
+  async updateProfile(data: UpdateProfileRequest): Promise<AuthResponse> {
+    const response = await this.request<AuthResponse>('/auth/profile', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+
+    if (response.success && response.user) {
+      localStorage.setItem('user', JSON.stringify(response.user));
     }
 
     return response;

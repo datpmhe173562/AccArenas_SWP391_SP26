@@ -247,6 +247,61 @@ namespace AccArenas.Api.Controllers
         }
 
         /// <summary>
+        /// Cập nhật thông tin profile người dùng hiện tại
+        /// </summary>
+        [HttpPut("profile")]
+        [Authorize]
+        public async Task<ActionResult<AuthResponse>> UpdateProfile(UpdateProfileRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState
+                    .Values.SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToDictionary(error => Guid.NewGuid().ToString(), error => error);
+                throw ExceptionMessages.BadRequest(ExceptionMessages.INVALID_INPUT, errors);
+            }
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                throw ExceptionMessages.Unauthorized();
+            }
+
+            user.FullName = request.FullName;
+            user.PhoneNumber = request.PhoneNumber;
+
+            var result = await _userManager.UpdateAsync(user);
+
+            if (!result.Succeeded)
+            {
+                var errors = result.Errors.ToDictionary(e => e.Code, e => e.Description);
+                throw ExceptionMessages.BadRequest("Failed to update profile", errors);
+            }
+
+            var roles = await _userManager.GetRolesAsync(user);
+
+            return Ok(
+                new AuthResponse
+                {
+                    Success = true,
+                    Message = "Cập nhật hồ sơ thành công",
+                    User = new UserInfo
+                    {
+                        Id = user.Id,
+                        UserName = user.UserName ?? string.Empty,
+                        Email = user.Email ?? string.Empty,
+                        FullName = user.FullName,
+                        PhoneNumber = user.PhoneNumber,
+                        IsActive = user.IsActive,
+                        CreatedAt = user.CreatedAt,
+                        Roles = roles.ToList(),
+                    },
+                }
+            );
+        }
+
+        /// <summary>
         /// Đổi mật khẩu
         /// </summary>
         [HttpPost("change-password")]
