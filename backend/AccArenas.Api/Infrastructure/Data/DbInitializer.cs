@@ -359,6 +359,7 @@ namespace AccArenas.Api.Infrastructure.Data
                         Id = Guid.NewGuid(),
                         Name = "League of Legends",
                         Slug = "league-of-legends",
+                        Image = "https://raw.githubusercontent.com/FPT-SU24-SWP391-G4/AccArenas_Images/main/categories/lol.png",
                         IsActive = true,
                     },
                     new Category
@@ -366,6 +367,7 @@ namespace AccArenas.Api.Infrastructure.Data
                         Id = Guid.NewGuid(),
                         Name = "Valorant",
                         Slug = "valorant",
+                        Image = "https://raw.githubusercontent.com/FPT-SU24-SWP391-G4/AccArenas_Images/main/categories/valorant.png",
                         IsActive = true,
                     },
                     new Category
@@ -373,6 +375,7 @@ namespace AccArenas.Api.Infrastructure.Data
                         Id = Guid.NewGuid(),
                         Name = "PUBG",
                         Slug = "pubg",
+                        Image = "https://raw.githubusercontent.com/FPT-SU24-SWP391-G4/AccArenas_Images/main/categories/pubg.png",
                         IsActive = true,
                     },
                     new Category
@@ -380,6 +383,7 @@ namespace AccArenas.Api.Infrastructure.Data
                         Id = Guid.NewGuid(),
                         Name = "Mobile Legends",
                         Slug = "mobile-legends",
+                        Image = "https://raw.githubusercontent.com/FPT-SU24-SWP391-G4/AccArenas_Images/main/categories/mlbb.png",
                         IsActive = true,
                     },
                     new Category
@@ -387,6 +391,15 @@ namespace AccArenas.Api.Infrastructure.Data
                         Id = Guid.NewGuid(),
                         Name = "Liên Quân Mobile",
                         Slug = "lien-quan-mobile",
+                        Image = "https://raw.githubusercontent.com/FPT-SU24-SWP391-G4/AccArenas_Images/main/categories/aov.png",
+                        IsActive = true,
+                    },
+                    new Category
+                    {
+                        Id = Guid.NewGuid(),
+                        Name = "FIFA 4",
+                        Slug = "fifa-4",
+                        Image = "https://raw.githubusercontent.com/FPT-SU24-SWP391-G4/AccArenas_Images/main/categories/fo4.png",
                         IsActive = true,
                     },
                 };
