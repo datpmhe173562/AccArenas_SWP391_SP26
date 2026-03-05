@@ -22,6 +22,24 @@ namespace AccArenas.Api.Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<Order>> GetOrdersByUserWithItemsAsync(Guid userId)
+        {
+            return await _dbSet
+                .Include(o => o.Items)
+                    .ThenInclude(oi => oi.GameAccount)
+                .Where(o => o.UserId == userId)
+                .OrderByDescending(o => o.CreatedAt)
+                .ToListAsync();
+        }
+
+        public async Task<Order?> GetOrderByIdWithItemsAsync(Guid orderId)
+        {
+            return await _dbSet
+                .Include(o => o.Items)
+                    .ThenInclude(oi => oi.GameAccount)
+                .FirstOrDefaultAsync(o => o.Id == orderId);
+        }
+
         public async Task<IEnumerable<Order>> GetOrdersByStatusAsync(string status)
         {
             return await _dbSet
