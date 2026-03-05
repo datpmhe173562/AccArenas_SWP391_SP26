@@ -14,8 +14,8 @@ export const categoryService = {
     return res.data;
   },
 
-  async getAllCategories(): Promise<ApiResponse<CategoryDto[]>> {
-    const res = await axiosInstance.get<ApiResponse<CategoryDto[]>>('/api/categories', {
+  async getAllCategories(): Promise<PagedResult<CategoryDto>> {
+    const res = await axiosInstance.get<PagedResult<CategoryDto>>('/api/categories', {
       params: { pageSize: 1000 }
     });
     return res.data;
