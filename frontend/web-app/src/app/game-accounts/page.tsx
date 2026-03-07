@@ -1,23 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { useSearchGameAccounts } from "@/hooks/useGameAccounts";
 import { useAllCategories } from "@/hooks/useCategories";
+import { useSearchParams, useRouter } from "next/navigation";
+import { formatCurrency } from "@/lib/utils";
 
 export default function GameAccountsPage() {
+    const searchParams = useSearchParams();
+    const router = useRouter();
+
     const [page, setPage] = useState(1);
-    const [searchQuery, setSearchQuery] = useState("");
-    const [selectedCategory, setSelectedCategory] = useState("");
+    const [searchQuery, setSearchQuery] = useState(searchParams.get("query") || "");
+    const [selectedCategory, setSelectedCategory] = useState(searchParams.get("cat") || "");
     const [minPrice, setMinPrice] = useState<number | undefined>();
     const [maxPrice, setMaxPrice] = useState<number | undefined>();
+
+    // When URL params change (e.g. user navigates from home), sync state
+    useEffect(() => {
+        const q = searchParams.get("query") || "";
+        const cat = searchParams.get("cat") || "";
+        setSearchQuery(q);
+        setSelectedCategory(cat);
+        setPage(1);
+    }, [searchParams]);
 
     const pageSize = 12;
 
     const { data: categoriesResult, isLoading: loadingCategories } = useAllCategories();
-    const categories = categoriesResult?.items || []; // API returns PagedResult with items array
+    const categories = (categoriesResult as any)?.items || (Array.isArray(categoriesResult) ? categoriesResult : []);
 
     const { data: accountsResult, isLoading: loadingAccounts } = useSearchGameAccounts(
         searchQuery,
@@ -32,6 +46,11 @@ export default function GameAccountsPage() {
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
         setPage(1);
+        // Update URL to reflect current search
+        const params = new URLSearchParams();
+        if (searchQuery) params.set("query", searchQuery);
+        if (selectedCategory) params.set("cat", selectedCategory);
+        router.push(`/game-accounts?${params.toString()}`);
     };
 
     const resetFilters = () => {
@@ -40,7 +59,9 @@ export default function GameAccountsPage() {
         setMinPrice(undefined);
         setMaxPrice(undefined);
         setPage(1);
+        router.push("/game-accounts");
     };
+
 
     return (
         <>
@@ -130,10 +151,36 @@ export default function GameAccountsPage() {
                         </div>
 
                         {/* Main Content */}
-                        <div className="flex-1">
-                            <h1 className="text-3xl font-bold text-gray-900 mb-6">Tài khoản Game</h1>
+                         <div className="flex-1 min-w-0">
+                             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-4">
+                                 <h1 className="text-3xl font-bold text-gray-900">Tài khoản Game</h1>
+                                 {accountsResult && (
+                                     <span className="text-sm text-gray-500">{accountsResult.totalCount} tài khoản</span>
+                                 )}
+                             </div>
 
-                            {loadingAccounts ? (
+                             {/* Category chips */}
+                             {!loadingCategories && categories.length > 0 && (
+                                 <div className="flex flex-wrap gap-2 mb-6">
+                                     <button
+                                         onClick={() => { setSelectedCategory(""); setPage(1); }}
+                                         className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${!selectedCategory ? "bg-indigo-600 text-white shadow-md shadow-indigo-100" : "bg-white text-gray-600 border border-gray-200 hover:border-indigo-300 hover:text-indigo-600"}`}
+                                     >
+                                         Tất cả
+                                     </button>
+                                     {categories.map((cat: any) => (
+                                         <button
+                                             key={cat.id}
+                                             onClick={() => { setSelectedCategory(cat.id); setPage(1); }}
+                                             className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${selectedCategory === cat.id ? "bg-indigo-600 text-white shadow-md shadow-indigo-100" : "bg-white text-gray-600 border border-gray-200 hover:border-indigo-300 hover:text-indigo-600"}`}
+                                         >
+                                             {cat.name}
+                                         </button>
+                                     ))}
+                                 </div>
+                             )}
+
+                             {loadingAccounts ? (
                                 <div className="flex justify-center items-center h-64">
                                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
                                 </div>
@@ -178,7 +225,7 @@ export default function GameAccountsPage() {
                                                         <p className="text-sm text-gray-500 mb-4">{account.game}</p>
                                                         <div className="flex justify-between items-center">
                                                             <span className="text-xl font-bold text-pink-600">
-                                                                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(account.price)}
+                                                                {formatCurrency(account.price)}
                                                             </span>
                                                         </div>
                                                     </div>
