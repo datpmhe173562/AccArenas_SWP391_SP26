@@ -93,13 +93,24 @@ export default function BlogDetailPage() {
                                 <p className="mt-1 text-sm text-gray-700">{new Date(blog.publishedAt).toLocaleString("vi-VN")}</p>
                             </div>
                         )}
+                        {blog.thumbnailUrl && (
+                            <div className="md:col-span-2">
+                                <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">Ảnh bìa</p>
+                                <img
+                                    src={blog.thumbnailUrl}
+                                    alt={blog.title}
+                                    className="h-40 w-auto rounded-lg object-cover border border-gray-200 shadow-sm"
+                                />
+                            </div>
+                        )}
                     </div>
 
                     <div className="border-t pt-4">
                         <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">Nội dung</p>
-                        <div className="prose max-w-none text-gray-700 whitespace-pre-wrap text-sm leading-relaxed bg-gray-50 rounded-md p-4">
-                            {blog.content}
-                        </div>
+                        <div
+                            className="prose max-w-none text-gray-700 text-sm leading-relaxed bg-gray-50 rounded-md p-4"
+                            dangerouslySetInnerHTML={{ __html: blog.content }}
+                        />
                     </div>
                 </div>
             </div>

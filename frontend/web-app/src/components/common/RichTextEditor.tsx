@@ -6,7 +6,10 @@ import Underline from "@tiptap/extension-underline";
 import Link from "@tiptap/extension-link";
 import TextAlign from "@tiptap/extension-text-align";
 import { TextStyle } from "@tiptap/extension-text-style";
-import { useEffect } from "react";
+import Image from "@tiptap/extension-image";
+import { useEffect, useRef } from "react";
+import { Plugin, PluginKey } from "@tiptap/pm/state";
+import { Extension } from "@tiptap/core";
 
 interface RichTextEditorProps {
   value: string;
@@ -15,7 +18,42 @@ interface RichTextEditorProps {
   minHeight?: string;
 }
 
-// Toolbar button component
+// Custom extension to intercept paste events for images
+const ImagePastePlugin = Extension.create({
+  name: "imagePaste",
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        key: new PluginKey("imagePaste"),
+        props: {
+          handlePaste: (view, event) => {
+            const items = Array.from(event.clipboardData?.items || []);
+            const imageItem = items.find((item) => item.type.startsWith("image/"));
+            if (!imageItem) return false;
+
+            event.preventDefault();
+            const file = imageItem.getAsFile();
+            if (!file) return false;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              const src = e.target?.result as string;
+              if (src) {
+                const { schema } = view.state;
+                const node = schema.nodes.image.create({ src });
+                const transaction = view.state.tr.replaceSelectionWith(node);
+                view.dispatch(transaction);
+              }
+            };
+            reader.readAsDataURL(file);
+            return true;
+          },
+        },
+      }),
+    ];
+  },
+});
+
 const ToolbarButton = ({
   onClick,
   active,
@@ -57,6 +95,8 @@ export default function RichTextEditor({
       TextStyle,
       Link.configure({ openOnClick: false }),
       TextAlign.configure({ types: ["heading", "paragraph"] }),
+      Image.configure({ inline: false, allowBase64: true }),
+      ImagePastePlugin,
     ],
     content: value,
     onUpdate({ editor }) {
@@ -70,7 +110,6 @@ export default function RichTextEditor({
     },
   });
 
-  // Sync external value changes (e.g. when loading existing blog)
   useEffect(() => {
     if (editor && value !== editor.getHTML()) {
       editor.commands.setContent(value);
@@ -84,11 +123,25 @@ export default function RichTextEditor({
     if (url) editor.chain().focus().setLink({ href: url }).run();
   };
 
+  const addImageByUrl = () => {
+    const url = window.prompt("Nhập URL ảnh:");
+    if (url) editor.chain().focus().setImage({ src: url }).run();
+  };
+
+  // Handle file input for image upload
+  const handleImageFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const src = e.target?.result as string;
+      if (src) editor.chain().focus().setImage({ src }).run();
+    };
+    reader.readAsDataURL(file);
+  };
+
   return (
     <div className="border border-gray-300 rounded-md overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-indigo-500">
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-0.5 px-2 py-1.5 bg-gray-50 border-b border-gray-200">
-        {/* Heading */}
         <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} active={editor.isActive("heading", { level: 1 })} title="Tiêu đề 1">
           <span className="font-bold text-xs">H1</span>
         </ToolbarButton>
@@ -101,7 +154,6 @@ export default function RichTextEditor({
 
         <Divider />
 
-        {/* Text style */}
         <ToolbarButton onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive("bold")} title="In đậm (Ctrl+B)">
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M15.6 10.79c.97-.67 1.65-1.77 1.65-2.79 0-2.26-1.75-4-4-4H7v14h7.04c2.09 0 3.71-1.7 3.71-3.79 0-1.52-.86-2.82-2.15-3.42zM10 6.5h3c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-3v-3zm3.5 9H10v-3h3.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5z"/></svg>
         </ToolbarButton>
@@ -117,7 +169,6 @@ export default function RichTextEditor({
 
         <Divider />
 
-        {/* Lists */}
         <ToolbarButton onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive("bulletList")} title="Danh sách chấm">
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M4 10.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5zm0-6c-.83 0-1.5.67-1.5 1.5S3.17 7.5 4 7.5 5.5 6.83 5.5 6 4.83 4.5 4 4.5zm0 12c-.83 0-1.5.68-1.5 1.5s.68 1.5 1.5 1.5 1.5-.68 1.5-1.5-.67-1.5-1.5-1.5zM7 19h14v-2H7v2zm0-6h14v-2H7v2zm0-8v2h14V5H7z"/></svg>
         </ToolbarButton>
@@ -133,7 +184,6 @@ export default function RichTextEditor({
 
         <Divider />
 
-        {/* Align */}
         <ToolbarButton onClick={() => editor.chain().focus().setTextAlign("left").run()} active={editor.isActive({ textAlign: "left" })} title="Căn trái">
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M15 15H3v2h12v-2zm0-8H3v2h12V7zM3 13h18v-2H3v2zm0 8h18v-2H3v2zM3 3v2h18V3H3z"/></svg>
         </ToolbarButton>
@@ -146,19 +196,40 @@ export default function RichTextEditor({
 
         <Divider />
 
-        {/* Link */}
         <ToolbarButton onClick={addLink} active={editor.isActive("link")} title="Chèn liên kết">
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>
         </ToolbarButton>
         {editor.isActive("link") && (
           <ToolbarButton onClick={() => editor.chain().focus().unsetLink().run()} active={false} title="Xóa liên kết">
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17 7h-4v2h4c1.65 0 3 1.35 3 3s-1.35 3-3 3h-4v2h4c2.76 0 5-2.24 5-5s-2.24-5-5-5zm-6 8H7c-1.65 0-3-1.35-3-3s1.35-3 3-3h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-2zm-3-4h8v2H8v-2z"/><line x1="3" y1="21" x2="21" y2="3" stroke="currentColor" strokeWidth="2"/></svg>
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17 7h-4v2h4c1.65 0 3 1.35 3 3s-1.35 3-3 3h-4v2h4c2.76 0 5-2.24 5-5s-2.24-5-5-5zm-6 8H7c-1.65 0-3-1.35-3-3s1.35-3 3-3h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-2zm-3-4h8v2H8v-2z"/></svg>
           </ToolbarButton>
         )}
 
+        {/* Image - URL */}
+        <ToolbarButton onClick={addImageByUrl} active={false} title="Chèn ảnh qua URL">
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+        </ToolbarButton>
+
+        {/* Image - File Upload */}
+        <label
+          title="Tải ảnh từ máy tính"
+          className="p-1.5 rounded text-sm transition-colors text-gray-600 hover:bg-gray-100 hover:text-gray-900 cursor-pointer"
+        >
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleImageFile(file);
+              e.target.value = "";
+            }}
+          />
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg>
+        </label>
+
         <Divider />
 
-        {/* Undo/Redo */}
         <ToolbarButton onClick={() => editor.chain().focus().undo().run()} active={false} title="Hoàn tác (Ctrl+Z)">
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>
         </ToolbarButton>
@@ -179,9 +250,10 @@ export default function RichTextEditor({
         </div>
       </div>
 
-      {/* Word count */}
-      <div className="px-3 py-1.5 bg-gray-50 border-t border-gray-200 text-xs text-gray-400 text-right">
-        {editor.getText().length} ký tự
+      {/* Footer hint */}
+      <div className="px-3 py-1.5 bg-gray-50 border-t border-gray-200 text-xs text-gray-400 flex items-center justify-between">
+        <span>💡 Dán ảnh (Ctrl+V) · Click 🖼 để chèn qua URL · Click ⬆ để tải từ máy tính</span>
+        <span>{editor.getText().length} ký tự</span>
       </div>
     </div>
   );

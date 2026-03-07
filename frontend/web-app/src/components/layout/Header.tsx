@@ -46,6 +46,12 @@ export default function Header() {
               Danh mục
             </Link>
             <Link
+              href="/blogs"
+              className="text-gray-700 hover:text-indigo-600 transition-colors"
+            >
+              Blog
+            </Link>
+            <Link
               href="/promotions"
               className="text-gray-700 hover:text-indigo-600 transition-colors"
             >

@@ -8,6 +8,9 @@ import { useAllCategories } from "@/hooks/useCategories";
 import { formatCurrency } from "@/lib/utils";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import HomeSlider from "@/components/sliders/HomeSlider";
+import HomeBanner from "@/components/banners/HomeBanner";
+import HomeBlog from "@/components/blogs/HomeBlog";
 
 export default function Home() {
   const router = useRouter();
@@ -33,6 +36,11 @@ export default function Home() {
     <>
       <Header />
       <div className="min-h-screen bg-gray-50 font-sans">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+            <HomeSlider />
+            <HomeBanner />
+        </div>
+        
         {/* Hero Section */}
         <section className="relative bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-800 text-white overflow-hidden">
           <div className="absolute inset-0 opacity-20">
@@ -176,6 +184,8 @@ export default function Home() {
         </section>
 
 
+
+        <HomeBlog />
 
       </div>
       <Footer />

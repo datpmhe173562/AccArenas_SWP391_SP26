@@ -71,9 +71,13 @@ export default function LoginPage() {
         router.push(redirectPath);
       }, 1000);
     } catch (error) {
+      let errorMsg = "Tên đăng nhập hoặc mật khẩu không đúng";
+      if (error instanceof Error) {
+        errorMsg = error.message;
+      }
       showError(
-        loginError || "Tên đăng nhập hoặc mật khẩu không đúng",
-        "Đăng nhập thất bại",
+        errorMsg,
+        "Đăng nhập thất bại"
       );
     }
   };

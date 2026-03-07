@@ -9,6 +9,7 @@ namespace AccArenas.Api.Application.DTOs
         public string Title { get; set; } = string.Empty;
         public string Slug { get; set; } = string.Empty;
         public string Content { get; set; } = string.Empty;
+        public string? ThumbnailUrl { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? PublishedAt { get; set; }
         public bool IsPublished { get; set; }
@@ -28,6 +29,8 @@ namespace AccArenas.Api.Application.DTOs
         [Required]
         public string Content { get; set; } = string.Empty;
 
+        public string? ThumbnailUrl { get; set; }
+
         [Required]
         public Guid CategoryId { get; set; }
 
@@ -46,9 +49,12 @@ namespace AccArenas.Api.Application.DTOs
         [Required]
         public string Content { get; set; } = string.Empty;
 
+        public string? ThumbnailUrl { get; set; }
+
         [Required]
         public Guid CategoryId { get; set; }
 
         public bool IsPublished { get; set; } = false;
     }
 }
+

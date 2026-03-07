@@ -178,6 +178,7 @@ export const SearchBlogs = () => {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tiêu đề</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thumbnail</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Danh mục</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày tạo</th>
@@ -201,6 +202,13 @@ export const SearchBlogs = () => {
                       <td className="px-6 py-4">
                         <div className="text-sm font-medium text-gray-900 line-clamp-2">{blog.title}</div>
                         <div className="text-xs text-gray-400">{blog.slug}</div>
+                      </td>
+                      <td className="px-4 py-4">
+                        {blog.thumbnailUrl ? (
+                          <img src={blog.thumbnailUrl} alt={blog.title} className="h-10 w-14 object-cover rounded border border-gray-200" />
+                        ) : (
+                          <span className="text-xs text-gray-300">—</span>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="text-sm text-gray-600">{blog.categoryName || "—"}</span>

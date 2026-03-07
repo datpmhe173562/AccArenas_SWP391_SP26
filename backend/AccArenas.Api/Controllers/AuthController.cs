@@ -627,5 +627,6 @@ namespace AccArenas.Api.Controllers
 
             return SignIn(principal, OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
         }
+
     }
 }
