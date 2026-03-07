@@ -91,9 +91,13 @@ export default function RegisterPage() {
         router.push("/auth/login");
       }, 1500);
     } catch (error) {
+      let errorMsg = "Đăng ký thất bại. Vui lòng thử lại.";
+      if (error instanceof Error) {
+        errorMsg = error.message;
+      }
       showError(
-        registerError || "Đăng ký thất bại. Vui lòng thử lại.",
-        "Đăng ký thất bại",
+        errorMsg,
+        "Đăng ký thất bại"
       );
     }
   };
