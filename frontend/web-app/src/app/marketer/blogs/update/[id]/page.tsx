@@ -22,6 +22,7 @@ export default function UpdateBlogPage() {
         title: "",
         slug: "",
         content: "",
+        thumbnailUrl: "",
         categoryId: "",
         isPublished: false,
     });
@@ -32,6 +33,7 @@ export default function UpdateBlogPage() {
                 title: blog.title,
                 slug: blog.slug,
                 content: blog.content,
+                thumbnailUrl: blog.thumbnailUrl || "",
                 categoryId: blog.categoryId,
                 isPublished: blog.isPublished,
             });
@@ -47,6 +49,7 @@ export default function UpdateBlogPage() {
                     title: form.title,
                     slug: form.slug || undefined,
                     content: form.content,
+                    thumbnailUrl: form.thumbnailUrl || undefined,
                     categoryId: form.categoryId,
                     isPublished: form.isPublished,
                 },
@@ -101,6 +104,22 @@ export default function UpdateBlogPage() {
                                     <option key={cat.id} value={cat.id}>{cat.name}</option>
                                 ))}
                             </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Ảnh bìa (Thumbnail)</label>
+                            <input
+                                type="url"
+                                value={form.thumbnailUrl}
+                                onChange={(e) => setForm(prev => ({ ...prev, thumbnailUrl: e.target.value }))}
+                                placeholder="https://example.com/image.jpg"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
+                            />
+                            {form.thumbnailUrl && (
+                                <div className="mt-2 rounded-lg overflow-hidden h-32 bg-gray-100">
+                                    <img src={form.thumbnailUrl} alt="preview" className="h-full w-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                                </div>
+                            )}
+                            <p className="mt-1 text-xs text-gray-400">Nhập URL ảnh để làm ảnh bìa</p>
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Nội dung <span className="text-red-500">*</span></label>

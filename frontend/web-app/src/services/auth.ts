@@ -81,6 +81,20 @@ class AuthService {
         const errorData = await response.json();
         errorMessage = errorData.message || errorMessage;
         errors = errorData.errors || {};
+
+        if (errorData.errors) {
+          if (Array.isArray(errorData.errors) && errorData.errors.length > 0) {
+            errorMessage = errorData.errors[0];
+          } else if (typeof errorData.errors === 'object' && Object.keys(errorData.errors).length > 0) {
+            const firstKey = Object.keys(errorData.errors)[0];
+            const firstError = errorData.errors[firstKey];
+            if (Array.isArray(firstError) && firstError.length > 0) {
+              errorMessage = firstError[0];
+            } else if (typeof firstError === 'string') {
+              errorMessage = firstError;
+            }
+          }
+        }
       } catch (e) {
         // If response is not JSON, use default message
       }
@@ -168,6 +182,13 @@ class AuthService {
     }
 
     return response;
+  }
+
+  async changePassword(currentPassword: string, newPassword: string, confirmPassword: string): Promise<{ success: boolean; message: string }> {
+    return this.request('/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
+    });
   }
 
   clearStorage(): void {

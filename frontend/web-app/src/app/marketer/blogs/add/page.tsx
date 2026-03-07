@@ -18,6 +18,7 @@ export default function AddBlogPage() {
         title: "",
         slug: "",
         content: "",
+        thumbnailUrl: "",
         categoryId: "",
         isPublished: false,
     });
@@ -48,6 +49,7 @@ export default function AddBlogPage() {
                 title: form.title,
                 slug: form.slug || undefined,
                 content: form.content,
+                thumbnailUrl: form.thumbnailUrl || undefined,
                 categoryId: form.categoryId,
                 isPublished: form.isPublished,
             });
@@ -104,6 +106,25 @@ export default function AddBlogPage() {
                                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                             />
                             <p className="mt-1 text-xs text-gray-400">Để trống để tự động tạo từ tiêu đề</p>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Ảnh bìa (Thumbnail)
+                            </label>
+                            <input
+                                type="url"
+                                value={form.thumbnailUrl}
+                                onChange={(e) => setForm(prev => ({ ...prev, thumbnailUrl: e.target.value }))}
+                                placeholder="https://example.com/image.jpg"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            />
+                            {form.thumbnailUrl && (
+                                <div className="mt-2 rounded-lg overflow-hidden h-32 bg-gray-100">
+                                    <img src={form.thumbnailUrl} alt="preview" className="h-full w-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                                </div>
+                            )}
+                            <p className="mt-1 text-xs text-gray-400">Nhập URL ảnh để làm ảnh bìa hiển thị trên danh sách blog</p>
                         </div>
 
                         <div>

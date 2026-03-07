@@ -77,6 +77,7 @@ export interface BlogPostDto {
   title: string;
   slug: string;
   content: string;
+  thumbnailUrl?: string | undefined;
   createdAt: string;
   publishedAt?: string | undefined;
   isPublished: boolean;
@@ -88,6 +89,7 @@ export interface CreateBlogPostRequest {
   title: string;
   slug?: string | undefined;
   content: string;
+  thumbnailUrl?: string | undefined;
   categoryId: string;
   isPublished: boolean;
 }
@@ -96,6 +98,7 @@ export interface UpdateBlogPostRequest {
   title: string;
   slug?: string | undefined;
   content: string;
+  thumbnailUrl?: string | undefined;
   categoryId: string;
   isPublished: boolean;
 }
