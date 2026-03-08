@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -9,7 +9,7 @@ import { useAllCategories } from "@/hooks/useCategories";
 import { useSearchParams, useRouter } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
 
-export default function GameAccountsPage() {
+function GameAccountsContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
 
@@ -264,5 +264,13 @@ export default function GameAccountsPage() {
             </div>
             <Footer />
         </>
+    );
+}
+
+export default function GameAccountsPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+            <GameAccountsContent />
+        </Suspense>
     );
 }

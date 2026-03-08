@@ -99,6 +99,13 @@ namespace AccArenas.Api.Controllers
                     throw new ApiException($"Danh mục với ID {request.CategoryId} không tồn tại", HttpStatusCode.BadRequest);
                 }
 
+                // Check for duplicate title
+                var existingTitle = await _unitOfWork.BlogPosts.GetFirstOrDefaultAsync(p => p.Title.ToLower() == request.Title.ToLower());
+                if (existingTitle != null)
+                {
+                    throw new ApiException("Tiêu đề bài viết đã tồn tại", HttpStatusCode.BadRequest);
+                }
+
                 var post = _mappingService.ToEntity(request);
                 await _unitOfWork.BlogPosts.AddAsync(post);
                 await _unitOfWork.CommitTransactionAsync();
@@ -141,6 +148,16 @@ namespace AccArenas.Api.Controllers
                 if (category == null)
                 {
                     throw new ApiException($"Danh mục với ID {request.CategoryId} không tồn tại", HttpStatusCode.BadRequest);
+                }
+
+                // Check for duplicate title
+                if (post.Title.ToLower() != request.Title.ToLower())
+                {
+                    var existingTitle = await _unitOfWork.BlogPosts.GetFirstOrDefaultAsync(p => p.Title.ToLower() == request.Title.ToLower());
+                    if (existingTitle != null && existingTitle.Id != id)
+                    {
+                        throw new ApiException("Tiêu đề bài viết đã tồn tại", HttpStatusCode.BadRequest);
+                    }
                 }
 
                 bool wasPublished = post.IsPublished;

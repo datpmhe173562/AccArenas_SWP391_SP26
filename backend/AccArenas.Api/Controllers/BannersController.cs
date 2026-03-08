@@ -74,6 +74,12 @@ namespace AccArenas.Api.Controllers
             {
                 await _unitOfWork.BeginTransactionAsync();
 
+                var existingTitle = await _unitOfWork.Banners.GetFirstOrDefaultAsync(b => b.Title.ToLower() == request.Title.ToLower());
+                if (existingTitle != null)
+                {
+                    throw new ApiException("Tiêu đề banner đã tồn tại", HttpStatusCode.BadRequest);
+                }
+
                 var banner = _mappingService.ToEntity(request);
                 await _unitOfWork.Banners.AddAsync(banner);
                 await _unitOfWork.CommitTransactionAsync();
@@ -103,7 +109,17 @@ namespace AccArenas.Api.Controllers
                 var banner = await _unitOfWork.Banners.GetByIdAsync(id);
                 if (banner == null)
                 {
-                    throw new ApiException($"Banner with ID {id} not found", HttpStatusCode.NotFound);
+                    throw new ApiException($"Banner với ID {id} không tồn tại", HttpStatusCode.NotFound);
+                }
+
+                // Check for duplicate title
+                if (banner.Title.ToLower() != request.Title.ToLower())
+                {
+                    var existingTitle = await _unitOfWork.Banners.GetFirstOrDefaultAsync(b => b.Title.ToLower() == request.Title.ToLower());
+                    if (existingTitle != null && existingTitle.Id != id)
+                    {
+                        throw new ApiException("Tiêu đề banner đã tồn tại", HttpStatusCode.BadRequest);
+                    }
                 }
 
                 _mappingService.UpdateEntity(banner, request);

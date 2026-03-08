@@ -43,6 +43,11 @@ export const UserService = {
     return res.data;
   },
 
+  async toggleUserStatus(id: string): Promise<any> {
+    const res = await axiosInstance.patch(`/api/users/${id}/toggle-status`);
+    return res.data;
+  },
+
   async assignRole(payload: AssignRoleRequest): Promise<any> {
     const res = await axiosInstance.post(`/api/users/${payload.userId}/roles`, payload);
     return { success: true, message: res.data };

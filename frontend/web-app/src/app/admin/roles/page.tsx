@@ -1,19 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { RoleService } from "@/services/roleService";
 import { RoleDto } from "@/types/generated-api";
+import { showSuccess, showError, showConfirm } from "@/lib/sweetalert";
 
 export default function RolesPage() {
   const [roles, setRoles] = useState<RoleDto[]>([]);
   const [loading, setLoading] = useState(true);
-  
-  // Modal State
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingRole, setEditingRole] = useState<RoleDto | null>(null);
-  const [formData, setFormData] = useState({ name: "", description: "" });
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     fetchRoles();
@@ -32,45 +28,15 @@ export default function RolesPage() {
     }
   };
 
-  const openCreateModal = () => {
-    setEditingRole(null);
-    setFormData({ name: "", description: "" });
-    setIsModalOpen(true);
-  };
 
-  const openEditModal = (role: RoleDto) => {
-    // Navigate to separate update page
-    window.location.href = `/admin/roles/update/${role.id}`;
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setEditingRole(null);
-    setFormData({ name: "", description: "" });
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    
-    try {
-      // Only Create logic remains here for modal
-      await RoleService.createRole(formData);
-      await fetchRoles();
-      closeModal();
-    } catch (error) {
-      console.error("Failed to save role", error);
-      alert("Có lỗi xảy ra khi lưu vai trò");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Bạn có chắc chắn muốn xóa vai trò "${name}" không?`)) return;
+    const isConfirmed = await showConfirm(`Bạn có chắc chắn muốn xóa vai trò "${name}" không?`, "Xác nhận xóa");
+    if (!isConfirmed) return;
     
     try {
       await RoleService.deleteRole(id);
+      showSuccess("Xóa vai trò thành công");
       await fetchRoles();
     } catch (error: any) {
         console.error("Failed to delete role", error);
@@ -88,7 +54,7 @@ export default function RolesPage() {
         }
 
         // Use alert for now, can upgrade to Swal if installed
-        alert(`Lỗi: ${errorMessage}`);
+        showError(`Lỗi: ${errorMessage}`);
     }
   };
 
@@ -114,15 +80,15 @@ export default function RolesPage() {
                 Tạo và quản lý các nhóm quyền hạn trong hệ thống
               </p>
             </div>
-            <button 
-              onClick={openCreateModal}
+            <Link 
+              href="/admin/roles/add"
               className="px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition shadow-sm flex items-center gap-2"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
               Tạo Role mới
-            </button>
+            </Link>
           </div>
         </div>
 
@@ -150,12 +116,12 @@ export default function RolesPage() {
                             </p>
                             
                             <div className="flex gap-2 mt-auto pt-3 border-t border-gray-100">
-                                <button
-                                    onClick={() => openEditModal(role)}
-                                    className="flex-1 px-3 py-1.5 text-sm font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded transition-colors"
+                                <Link
+                                    href={`/admin/roles/update/${role.id}`}
+                                    className="flex-1 px-3 py-1.5 text-sm font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded transition-colors text-center block"
                                 >
                                     Chỉnh sửa
-                                </button>
+                                </Link>
                                 <button
                                     onClick={() => handleDelete(role.id, role.name || "")}
                                     className="px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded transition-colors"
@@ -169,79 +135,6 @@ export default function RolesPage() {
             )}
         </div>
       </div>
-
-      {/* Create/Edit Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div className="fixed inset-0 transition-opacity" aria-hidden="true">
-              <div className="absolute inset-0 bg-gray-500 opacity-75" onClick={closeModal}></div>
-            </div>
-
-            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-              <form onSubmit={handleSubmit}>
-                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                  <div className="sm:flex sm:items-start">
-                    <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                      <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-                        {editingRole ? "Cập nhật Role" : "Tạo Role mới"}
-                      </h3>
-                      
-                      <div className="space-y-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Tên Role <span className="text-red-500">*</span>
-                          </label>
-                          <input
-                            type="text"
-                            required
-                            value={formData.name}
-                            onChange={(e) => setFormData({...formData, name: e.target.value})}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                            placeholder="VD: Moderator"
-                          />
-                        </div>
-                        
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Mô tả
-                          </label>
-                          <textarea
-                            rows={3}
-                            value={formData.description}
-                            onChange={(e) => setFormData({...formData, description: e.target.value})}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                            placeholder="Mô tả quyền hạn của role này..."
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
-                  >
-                    {isSubmitting ? "Đang lưu..." : "Lưu lại"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={closeModal}
-                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-                  >
-                    Hủy bỏ
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
     </AdminLayout>
   );
 }

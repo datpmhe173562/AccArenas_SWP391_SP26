@@ -88,7 +88,7 @@ namespace AccArenas.Api.Controllers
 
                 if (existingCategory != null)
                 {
-                    throw new ApiException("Category with this name already exists", HttpStatusCode.BadRequest);
+                    throw new ApiException("Tên danh mục đã tồn tại", HttpStatusCode.BadRequest);
                 }
 
                 var category = _mappingService.ToEntity(request);
@@ -135,7 +135,7 @@ namespace AccArenas.Api.Controllers
 
                     if (existingCategory != null)
                     {
-                        throw new ApiException("Category with this name already exists", HttpStatusCode.BadRequest);
+                        throw new ApiException("Tên danh mục đã tồn tại", HttpStatusCode.BadRequest);
                     }
                 }
 

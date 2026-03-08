@@ -328,7 +328,7 @@ export const GameAccountForm = ({ id }: GameAccountFormProps) => {
           {/* Section 4: Trạng thái & Hoàn tất */}
           <div className="bg-gradient-to-r from-gray-50 to-white p-8 rounded-[2rem] border border-gray-100 flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="flex items-center gap-4">
-              <div className="relative inline-flex items-center cursor-pointer">
+              <label htmlFor="isAvailable" className="relative inline-flex items-center cursor-pointer">
                 <input
                   type="checkbox"
                   name="isAvailable"
@@ -338,7 +338,7 @@ export const GameAccountForm = ({ id }: GameAccountFormProps) => {
                   className="sr-only peer"
                 />
                 <div className="w-14 h-8 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-indigo-600"></div>
-              </div>
+              </label>
               <div>
                 <label htmlFor="isAvailable" className="text-sm font-black text-gray-900 uppercase tracking-widest">Trạng thái sẵn sàng</label>
                 <p className="text-xs text-gray-400 font-medium tracking-tight">Kích hoạt để sản phẩm hiển thị trên sàn giao dịch</p>

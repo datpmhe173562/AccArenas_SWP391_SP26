@@ -74,6 +74,12 @@ namespace AccArenas.Api.Controllers
             {
                 await _unitOfWork.BeginTransactionAsync();
 
+                var existingTitle = await _unitOfWork.Sliders.GetFirstOrDefaultAsync(s => s.Title.ToLower() == request.Title.ToLower());
+                if (existingTitle != null)
+                {
+                    throw new ApiException("Tiêu đề slider đã tồn tại", HttpStatusCode.BadRequest);
+                }
+
                 var slider = _mappingService.ToEntity(request);
                 await _unitOfWork.Sliders.AddAsync(slider);
                 await _unitOfWork.CommitTransactionAsync();
@@ -103,7 +109,17 @@ namespace AccArenas.Api.Controllers
                 var slider = await _unitOfWork.Sliders.GetByIdAsync(id);
                 if (slider == null)
                 {
-                    throw new ApiException($"Slider with ID {id} not found", HttpStatusCode.NotFound);
+                    throw new ApiException($"Slider với ID {id} không tồn tại", HttpStatusCode.NotFound);
+                }
+
+                // Check for duplicate title
+                if (slider.Title.ToLower() != request.Title.ToLower())
+                {
+                    var existingTitle = await _unitOfWork.Sliders.GetFirstOrDefaultAsync(s => s.Title.ToLower() == request.Title.ToLower());
+                    if (existingTitle != null && existingTitle.Id != id)
+                    {
+                        throw new ApiException("Tiêu đề slider đã tồn tại", HttpStatusCode.BadRequest);
+                    }
                 }
 
                 _mappingService.UpdateEntity(slider, request);

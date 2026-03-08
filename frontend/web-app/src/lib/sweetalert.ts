@@ -88,11 +88,10 @@ export const showValidationErrors = (errors: Record<string, string>) => {
     .map(([field, message]) => `<li class="text-left">${message}</li>`)
     .join('');
 
-  return Swal.fire({
+  return Toast.fire({
     icon: 'error',
     title: 'Lỗi xác thực',
-    html: `<ul class="text-sm">${errorList}</ul>`,
-    confirmButtonColor: '#4f46e5',
+    html: `<ul class="text-sm m-0 pl-4 py-1">${errorList}</ul>`,
   });
 };
 
