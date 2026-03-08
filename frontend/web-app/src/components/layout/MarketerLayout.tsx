@@ -2,9 +2,10 @@
 
 import { ReactNode, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useLogout } from "@/hooks/useAuth";
+import { useEffect } from "react";
 
 interface MarketerLayoutProps {
     children: ReactNode;
@@ -29,8 +30,27 @@ const menuItems: MenuItem[] = [
 export default function MarketerLayout({ children }: MarketerLayoutProps) {
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const pathname = usePathname();
-    const { user } = useAuth();
+    const router = useRouter();
+    const { user, isLoading } = useAuth();
     const logout = useLogout();
+
+    useEffect(() => {
+        if (!isLoading) {
+            if (!user) {
+                router.push("/auth/login");
+            } else if (!user.roles?.includes("MarketingStaff")) {
+                router.push("/");
+            }
+        }
+    }, [user, isLoading, router]);
+
+    if (isLoading || !user || !user.roles?.includes("MarketingStaff")) {
+        return (
+            <div className="min-h-screen bg-gray-100 flex justify-center items-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gray-100">
