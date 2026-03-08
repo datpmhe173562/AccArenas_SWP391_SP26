@@ -8,7 +8,7 @@ namespace AccArenas.Api.Application.DTOs
         public string? FullName { get; set; }
 
         [StringLength(20, ErrorMessage = "Số điện thoại không được vượt quá 20 ký tự")]
-        [RegularExpression(@"^(0|[1-9][0-9]*)$", ErrorMessage = "Số điện thoại không hợp lệ")]
+        [RegularExpression(@"^\d+$", ErrorMessage = "Số điện thoại không hợp lệ")]
         public string? PhoneNumber { get; set; }
     }
 }
