@@ -187,7 +187,7 @@ class AuthService {
   async changePassword(currentPassword: string, newPassword: string, confirmPassword: string): Promise<{ success: boolean; message: string }> {
     return this.request('/auth/change-password', {
       method: 'POST',
-      body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
+      body: JSON.stringify({ currentPassword, newPassword, confirmNewPassword: confirmPassword }),
     });
   }
 

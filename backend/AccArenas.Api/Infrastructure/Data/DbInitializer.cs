@@ -23,6 +23,14 @@ namespace AccArenas.Api.Infrastructure.Data
             var logger = scope.ServiceProvider.GetRequiredService<ILogger<ApplicationDbContext>>();
             logger.LogInformation("Database migration completed");
 
+            // Cleanup: Removed Moderator Role
+            var modRole = await roleManager.FindByNameAsync("Moderator");
+            if (modRole != null)
+            {
+                await roleManager.DeleteAsync(modRole);
+                logger.LogInformation("Deleted Moderator role from existing database.");
+            }
+
             // Seed roles if they don't exist
             await SeedRolesAsync(roleManager, logger);
 
@@ -66,12 +74,7 @@ namespace AccArenas.Api.Infrastructure.Data
                 {
                     Name = "MarketingStaff",
                     Description = "Marketing staff managing content and promotions",
-                },
-                new ApplicationRole
-                {
-                    Name = "Moderator",
-                    Description = "Moderator managing content and user support",
-                },
+                }
             };
 
             foreach (var role in roles)
@@ -191,16 +194,7 @@ namespace AccArenas.Api.Infrastructure.Data
                     FullName = "Marketing Staff One",
                     Password = "Test@123",
                     Role = "MarketingStaff",
-                },
-                // Moderator
-                new
-                {
-                    Email = "mod@test.com",
-                    UserName = "moderator",
-                    FullName = "Moderator User",
-                    Password = "Test@123",
-                    Role = "Moderator",
-                },
+                }
             };
 
             foreach (var userData in testUsers)
@@ -419,119 +413,43 @@ namespace AccArenas.Api.Infrastructure.Data
             {
                 logger.LogInformation("Seeding game accounts...");
 
-                var lolCategory = await context.Categories.FirstOrDefaultAsync(c =>
-                    c.Slug == "league-of-legends"
-                );
-                var valorantCategory = await context.Categories.FirstOrDefaultAsync(c =>
-                    c.Slug == "valorant"
-                );
-                var pubgCategory = await context.Categories.FirstOrDefaultAsync(c =>
-                    c.Slug == "pubg"
-                );
+                var categories = await context.Categories.ToListAsync();
+                var gameAccounts = new List<GameAccount>();
 
-                if (lolCategory != null && valorantCategory != null && pubgCategory != null)
+                foreach (var category in categories)
                 {
-                    var gameAccounts = new[]
+                    var prefix = category.Slug switch
                     {
-                        // League of Legends accounts
-                        new GameAccount
-                        {
-                            Id = Guid.NewGuid(),
-                            Game = "League of Legends",
-                            AccountName = "LOL_Diamond_001",
-                            Password = "Diamond123@",
-                            Rank = "Diamond IV",
-                            Price = 1500000,
-                            Currency = "VND",
-                            IsAvailable = true,
-                            CategoryId = lolCategory.Id,
-                            CreatedAt = DateTime.UtcNow,
-                        },
-                        new GameAccount
-                        {
-                            Id = Guid.NewGuid(),
-                            Game = "League of Legends",
-                            AccountName = "LOL_Platinum_002",
-                            Password = "Platinum456!",
-                            Rank = "Platinum II",
-                            Price = 900000,
-                            Currency = "VND",
-                            IsAvailable = true,
-                            CategoryId = lolCategory.Id,
-                            CreatedAt = DateTime.UtcNow,
-                        },
-                        new GameAccount
-                        {
-                            Id = Guid.NewGuid(),
-                            Game = "League of Legends",
-                            AccountName = "LOL_Gold_003",
-                            Password = "Gold789#",
-                            Rank = "Gold I",
-                            Price = 500000,
-                            Currency = "VND",
-                            IsAvailable = true,
-                            CategoryId = lolCategory.Id,
-                            CreatedAt = DateTime.UtcNow,
-                        },
-                        // Valorant accounts
-                        new GameAccount
-                        {
-                            Id = Guid.NewGuid(),
-                            Game = "Valorant",
-                            AccountName = "VAL_Immortal_001",
-                            Password = "Immortal999$",
-                            Rank = "Immortal 1",
-                            Price = 2500000,
-                            Currency = "VND",
-                            IsAvailable = true,
-                            CategoryId = valorantCategory.Id,
-                            CreatedAt = DateTime.UtcNow,
-                        },
-                        new GameAccount
-                        {
-                            Id = Guid.NewGuid(),
-                            Game = "Valorant",
-                            AccountName = "VAL_Diamond_002",
-                            Password = "ValDiamond777%",
-                            Rank = "Diamond 3",
-                            Price = 1200000,
-                            Currency = "VND",
-                            IsAvailable = true,
-                            CategoryId = valorantCategory.Id,
-                            CreatedAt = DateTime.UtcNow,
-                        },
-                        // PUBG accounts
-                        new GameAccount
-                        {
-                            Id = Guid.NewGuid(),
-                            Game = "PUBG",
-                            AccountName = "PUBG_Conqueror_001",
-                            Password = "Conqueror555&",
-                            Rank = "Conqueror",
-                            Price = 3000000,
-                            Currency = "VND",
-                            IsAvailable = true,
-                            CategoryId = pubgCategory.Id,
-                            CreatedAt = DateTime.UtcNow,
-                        },
-                        new GameAccount
-                        {
-                            Id = Guid.NewGuid(),
-                            Game = "PUBG",
-                            AccountName = "PUBG_Ace_002",
-                            Password = "PubgAce333*",
-                            Rank = "Ace",
-                            Price = 1800000,
-                            Currency = "VND",
-                            IsAvailable = false, // Sold account
-                            CategoryId = pubgCategory.Id,
-                            CreatedAt = DateTime.UtcNow,
-                        },
+                        "league-of-legends" => "LOL",
+                        "valorant" => "VAL",
+                        "pubg" => "PUBG",
+                        "fifa-4" => "FO4",
+                        _ => "ACC"
                     };
 
+                    for (int i = 1; i <= 10; i++)
+                    {
+                        gameAccounts.Add(new GameAccount
+                        {
+                            Id = Guid.NewGuid(),
+                            Game = category.Name,
+                            AccountName = $"{prefix}_{category.Name.Replace(" ", "")}_{i:D2}",
+                            Password = $"Pass{prefix}@{i}!",
+                            Rank = i > 8 ? "Cao Thủ" : "Kim Cương",
+                            Price = 500000 + (i * 100000), // Prices between 600K and 1.5M
+                            Currency = "VND",
+                            IsAvailable = i < 10, // 9 available, 1 sold per category
+                            CategoryId = category.Id,
+                            CreatedAt = DateTime.UtcNow,
+                        });
+                    }
+                }
+
+                if (gameAccounts.Any())
+                {
                     await context.GameAccounts.AddRangeAsync(gameAccounts);
                     await context.SaveChangesAsync();
-                    logger.LogInformation($"Created {gameAccounts.Length} game accounts");
+                    logger.LogInformation($"Created {gameAccounts.Count} game accounts");
                 }
             }
         }

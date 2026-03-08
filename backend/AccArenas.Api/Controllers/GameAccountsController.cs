@@ -134,7 +134,7 @@ namespace AccArenas.Api.Controllers
                 );
                 if (existingAccount != null)
                 {
-                    throw new ApiException("Account name already exists", HttpStatusCode.BadRequest);
+                    throw new ApiException("Tên sản phẩm đã tồn tại", HttpStatusCode.BadRequest);
                 }
 
                 var gameAccount = _mapper.Map<GameAccount>(request);
@@ -172,6 +172,19 @@ namespace AccArenas.Api.Controllers
                 if (existingAccount == null)
                 {
                     throw new ApiException($"Game account with ID {id} not found", HttpStatusCode.NotFound);
+                }
+
+                // Check if new account name conflicts with existing product
+                if (existingAccount.AccountName != request.AccountName)
+                {
+                    var nameConflict = await _unitOfWork.GameAccounts.GetByAccountNameAsync(
+                        request.AccountName
+                    );
+
+                    if (nameConflict != null && nameConflict.Id != id)
+                    {
+                        throw new ApiException("Tên sản phẩm đã tồn tại", HttpStatusCode.BadRequest);
+                    }
                 }
 
                 // Map updates

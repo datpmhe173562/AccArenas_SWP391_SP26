@@ -49,8 +49,8 @@ export default function RegisterPage() {
 
     if (!formData.password) {
       newErrors.password = "Mật khẩu là bắt buộc";
-    } else if (formData.password.length < 6 || formData.password.length > 100) {
-      newErrors.password = "Mật khẩu phải từ 6-100 ký tự";
+    } else if (formData.password.length < 6) {
+      newErrors.password = "Mật khẩu cần 6 ký tự trở lên";
     }
 
     if (!formData.confirmPassword) {

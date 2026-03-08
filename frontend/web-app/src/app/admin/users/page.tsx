@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import AdminLayout from "@/components/layout/AdminLayout";
 import Pagination from "@/components/common/Pagination";
+import { showConfirm, showSuccess, showError } from "@/lib/sweetalert";
 
 export default function UsersPage() {
   const [users, setUsers] = useState<UserDto[]>([]);
@@ -121,19 +122,31 @@ export default function UsersPage() {
   const handleToggleAccountStatus = async (user: UserDto) => {
     try {
       const action = user.isActive ? "khóa" : "mở khóa";
-      // TODO: Implement API call để lock/unlock user
-      console.log(`${action} tài khoản ${user.userName}`);
+      
+      const isConfirm = await showConfirm(
+        `Bạn có chắc chắn muốn ${action} tài khoản ${user.userName}?`,
+        "Xác nhận",
+        "Có",
+        "Hủy"
+      );
 
-      // Update local state
+      if (!isConfirm) return;
+
+      // Call API
+      await UserService.toggleUserStatus(user.id || "");
+
+      showSuccess(`Đã ${action} tài khoản thành công`);
+
+      // Update local state instead of refetching for better UX
       setUsers(
         users.map((u) =>
           u.id === user.id ? { ...u, isActive: !u.isActive } : u,
         ),
       );
 
-      // fetchUsers(); // Uncomment when API is implemented
     } catch (error) {
       console.error("Không thể thay đổi trạng thái tài khoản", error);
+      showError("Có lỗi xảy ra, vui lòng thử lại sau!");
     }
   };
 
