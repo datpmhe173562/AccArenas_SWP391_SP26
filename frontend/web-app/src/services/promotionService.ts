@@ -45,5 +45,12 @@ export const promotionService = {
     async toggleStatus(id: string): Promise<PromotionDto> {
         const res = await axiosInstance.patch<PromotionDto>(`/api/promotions/${id}/toggle-status`);
         return res.data;
+    },
+
+    async validatePromotionCode(code: string): Promise<{ isValid: boolean; message: string; promotion?: PromotionDto }> {
+        const res = await axiosInstance.post<any>('/api/promotions/validate', code, {
+            headers: { 'Content-Type': 'application/json' }
+        });
+        return res.data;
     }
 };
