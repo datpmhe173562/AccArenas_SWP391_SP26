@@ -3,6 +3,7 @@ import { ApiResponse, OrderDto } from '@/types/generated-api';
 
 export interface CreateOrderRequest {
     gameAccountIds: string[];
+    promotionCode?: string;
 }
 
 export const orderService = {

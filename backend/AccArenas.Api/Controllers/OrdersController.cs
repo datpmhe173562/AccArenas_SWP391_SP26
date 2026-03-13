@@ -129,11 +129,16 @@ namespace AccArenas.Api.Controllers
                 var gameAccount = await _unitOfWork.GameAccounts.GetByIdAsync(accountId);
                 if (gameAccount == null || !gameAccount.IsAvailable)
                 {
-                    return BadRequest(new ApiResponse<string> { Success = false, Message = $"Tài khoản {accountId} không tồn tại hoặc đã được mua." });
+                    return BadRequest(new ApiResponse<string> { Success = false, Message = "Một hoặc nhiều tài khoản không tồn tại hoặc đã được người khác đặt mua." });
                 }
 
                 totalAmount += gameAccount.Price;
                 gameAccounts.Add(gameAccount);
+                
+                // Immediately mark as unavailable to "lock" it
+                gameAccount.IsAvailable = false;
+                _unitOfWork.GameAccounts.Update(gameAccount);
+
                 orderItems.Add(new OrderItem
                 {
                     Id = Guid.NewGuid(),
@@ -141,6 +146,20 @@ namespace AccArenas.Api.Controllers
                     Price = gameAccount.Price,
                     Quantity = 1
                 });
+            }
+
+            // Apply Promotion if provided
+            decimal discountAmount = 0;
+            if (!string.IsNullOrWhiteSpace(request.PromotionCode))
+            {
+                var promotion = await _unitOfWork.Promotions.GetByCodeAsync(request.PromotionCode);
+                var now = DateTime.UtcNow;
+
+                if (promotion != null && promotion.IsActive && now >= promotion.StartDate && now <= promotion.EndDate)
+                {
+                    discountAmount = totalAmount * (promotion.DiscountPercent / 100);
+                    totalAmount -= discountAmount;
+                }
             }
 
             // 2. Create Order
@@ -156,14 +175,6 @@ namespace AccArenas.Api.Controllers
             };
 
             await _unitOfWork.Orders.AddAsync(order);
-
-            // 3. Mark Game Accounts as Pending or Unavailale (Locking them) 
-            foreach (var acc in gameAccounts)
-            {
-                acc.IsAvailable = false;
-                _unitOfWork.GameAccounts.Update(acc);
-            }
-
             await _unitOfWork.SaveChangesAsync();
 
             // 4. Generate VNPay URL

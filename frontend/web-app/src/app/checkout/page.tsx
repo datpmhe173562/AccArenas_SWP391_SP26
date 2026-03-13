@@ -19,12 +19,38 @@ function CheckoutContent() {
     const { data: account, isLoading: accountLoading } = useGameAccount(id || "", !!id);
     
     const [isProcessing, setIsProcessing] = useState(false);
+    const [voucherCode, setVoucherCode] = useState("");
+    const [appliedVoucher, setAppliedVoucher] = useState<{ code: string, discountPercent: number } | null>(null);
+    const [isValidating, setIsValidating] = useState(false);
 
     useEffect(() => {
         if (!authLoading && !isAuthenticated) {
             router.push(`/auth/login?redirect=/checkout?id=${id}`);
         }
     }, [isAuthenticated, authLoading, router, id]);
+
+    const handleApplyVoucher = async () => {
+        if (!voucherCode.trim()) return;
+        setIsValidating(true);
+        try {
+            const res = await (await import("@/services/promotionService")).promotionService.validatePromotionCode(voucherCode);
+            if (res.isValid && res.promotion) {
+                setAppliedVoucher({
+                    code: res.promotion.code,
+                    discountPercent: res.promotion.discountPercent
+                });
+                import("@/lib/sweetalert").then(m => m.showSuccess("Áp dụng mã giảm giá thành công!"));
+            } else {
+                import("@/lib/sweetalert").then(m => m.showError(res.message || "Mã giảm giá không hợp lệ"));
+                setAppliedVoucher(null);
+            }
+        } catch (error) {
+            import("@/lib/sweetalert").then(m => m.showError("Lỗi hệ thống khi kiểm tra mã giảm giá"));
+            setAppliedVoucher(null);
+        } finally {
+            setIsValidating(false);
+        }
+    };
 
     if (authLoading || accountLoading) {
         return (
@@ -52,13 +78,19 @@ function CheckoutContent() {
         if (!id) return;
         setIsProcessing(true);
         try {
-            const paymentUrl = await orderService.createPayment({ gameAccountIds: [id] });
+            const paymentUrl = await orderService.createPayment({ 
+                gameAccountIds: [id],
+                promotionCode: appliedVoucher?.code
+            });
             window.location.href = paymentUrl;
         } catch (error: any) {
             showError(error.message || "Có lỗi xảy ra khi tạo thanh toán");
             setIsProcessing(false);
         }
     };
+
+    const discountAmount = appliedVoucher ? (account.price * appliedVoucher.discountPercent / 100) : 0;
+    const finalTotal = account.price - discountAmount;
 
     return (
         <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -105,13 +137,42 @@ function CheckoutContent() {
                             <span>Thành tiền:</span>
                             <span className="font-medium text-gray-900">{formatCurrency(account.price)}</span>
                         </div>
+                        {appliedVoucher && (
+                            <div className="flex justify-between text-pink-600">
+                                <span className="flex items-center gap-1">
+                                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5 5a3 3 0 015-2.236A3 3 0 0114.83 6H16a2 2 0 110 4h-5V9a1 1 0 10-2 0v1H4a2 2 0 110-4h1.17C5.06 5.687 5 5.35 5 5zm4 1V5a1 1 0 10-1.115.992l1.115.008zm3-1a1 1 0 11-1 1h1V5z" clipRule="evenodd" /><path d="M9 11H4v5a2 2 0 002 2h4v-7zM11 18h4a2 2 0 002-2v-5h-5v7z" /></svg>
+                                    Giảm giá ({appliedVoucher.code}):
+                                </span>
+                                <span className="font-medium">-{formatCurrency(discountAmount)}</span>
+                            </div>
+                        )}
                         <div className="flex justify-between text-gray-600">
                             <span>Phí giao dịch:</span>
                             <span className="font-medium text-green-600">Miễn phí</span>
                         </div>
-                        <div className="pt-4 mt-4 border-t border-gray-100 flex justify-between items-center">
-                            <span className="text-lg font-bold text-gray-900">Tổng thanh toán:</span>
-                            <span className="text-3xl font-bold text-pink-600">{formatCurrency(account.price)}</span>
+                        
+                        <div className="pt-4 mt-6 border-t border-gray-100 flex flex-col gap-4">
+                            <div className="flex gap-2">
+                                <input 
+                                    type="text" 
+                                    placeholder="Nhập mã giảm giá..." 
+                                    value={voucherCode}
+                                    onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
+                                    className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none uppercase text-sm font-bold"
+                                />
+                                <button 
+                                    onClick={handleApplyVoucher}
+                                    disabled={isValidating || !voucherCode.trim()}
+                                    className="px-6 py-2 bg-gray-800 text-white rounded-lg text-sm font-bold hover:bg-black transition-colors disabled:opacity-50"
+                                >
+                                    {isValidating ? "Đang check..." : "Áp dụng"}
+                                </button>
+                            </div>
+
+                            <div className="pt-4 border-t border-gray-100 flex justify-between items-center">
+                                <span className="text-lg font-bold text-gray-900">Tổng thanh toán:</span>
+                                <span className="text-3xl font-bold text-pink-600">{formatCurrency(finalTotal)}</span>
+                            </div>
                         </div>
                     </div>
                     <div className="px-6 py-6 bg-gray-50 border-t border-gray-100">
@@ -120,7 +181,7 @@ function CheckoutContent() {
                             disabled={isProcessing}
                             className="w-full flex justify-center py-4 px-4 border border-transparent rounded-xl shadow-sm text-lg font-bold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-all"
                         >
-                            {isProcessing ? "Đang xử lý..." : "Thanh toán qua VNPay"}
+                            {isProcessing ? "Đang xử lý..." : "Thanh toán"}
                         </button>
                         <p className="text-center text-sm text-gray-500 mt-4">
                             Hệ thống sẽ chuyển hướng bạn đến cổng thanh toán VNPay an toàn tuyệt đối.

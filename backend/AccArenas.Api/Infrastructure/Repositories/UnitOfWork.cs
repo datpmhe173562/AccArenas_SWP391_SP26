@@ -24,6 +24,9 @@ namespace AccArenas.Api.Infrastructure.Repositories
         private IFeedbackRepository? _feedbacks;
         private IGameAccountRepository? _gameAccounts;
         private IOrderRepository? _orders;
+        private IFulfillmentEventRepository? _fulfillmentEvents;
+        private IInquiryRepository? _inquiries;
+        private IRepository<InquiryMessage>? _inquiryMessages;
         private IPromotionRepository? _promotions;
         private ISliderRepository? _sliders;
 
@@ -52,6 +55,14 @@ namespace AccArenas.Api.Infrastructure.Repositories
             _gameAccounts ??= new GameAccountRepository(_context);
 
         public IOrderRepository Orders => _orders ??= new OrderRepository(_context);
+
+        public IFulfillmentEventRepository FulfillmentEvents =>
+            _fulfillmentEvents ??= new FulfillmentEventRepository(_context);
+
+        public IInquiryRepository Inquiries => _inquiries ??= new InquiryRepository(_context);
+
+        public IRepository<InquiryMessage> InquiryMessages =>
+            _inquiryMessages ??= new Repository<InquiryMessage>(_context);
 
         public IPromotionRepository Promotions => _promotions ??= new PromotionRepository(_context);
 
