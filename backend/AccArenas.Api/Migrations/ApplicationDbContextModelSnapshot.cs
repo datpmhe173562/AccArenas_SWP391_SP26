@@ -251,6 +251,37 @@ namespace AccArenas.Api.Migrations
                     b.ToTable("Feedbacks");
                 });
 
+            modelBuilder.Entity("AccArenas.Api.Domain.Models.FulfillmentEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("OrderId");
+
+                    b.ToTable("FulfillmentEvents");
+                });
+
             modelBuilder.Entity("AccArenas.Api.Domain.Models.GameAccount", b =>
                 {
                     b.Property<Guid>("Id")
@@ -299,7 +330,7 @@ namespace AccArenas.Api.Migrations
                     b.ToTable("GameAccounts");
                 });
 
-            modelBuilder.Entity("AccArenas.Api.Domain.Models.Order", b =>
+            modelBuilder.Entity("AccArenas.Api.Domain.Models.Inquiry", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -308,7 +339,78 @@ namespace AccArenas.Api.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<Guid>("CustomerUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerUserId");
+
+                    b.HasIndex("OrderId");
+
+                    b.ToTable("Inquiries");
+                });
+
+            modelBuilder.Entity("AccArenas.Api.Domain.Models.InquiryMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("InquiryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("SenderRole")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("SenderUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InquiryId");
+
+                    b.HasIndex("SenderUserId");
+
+                    b.ToTable("InquiryMessages");
+                });
+
+            modelBuilder.Entity("AccArenas.Api.Domain.Models.Order", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("AssignedToSalesId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FulfillmentStatus")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -323,6 +425,8 @@ namespace AccArenas.Api.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AssignedToSalesId");
 
                     b.HasIndex("UserId");
 
@@ -789,6 +893,25 @@ namespace AccArenas.Api.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("AccArenas.Api.Domain.Models.FulfillmentEvent", b =>
+                {
+                    b.HasOne("AccArenas.Api.Domain.Models.ApplicationUser", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("AccArenas.Api.Domain.Models.Order", "Order")
+                        .WithMany("FulfillmentEvents")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("Order");
+                });
+
             modelBuilder.Entity("AccArenas.Api.Domain.Models.GameAccount", b =>
                 {
                     b.HasOne("AccArenas.Api.Domain.Models.Category", "Category")
@@ -800,13 +923,58 @@ namespace AccArenas.Api.Migrations
                     b.Navigation("Category");
                 });
 
+            modelBuilder.Entity("AccArenas.Api.Domain.Models.Inquiry", b =>
+                {
+                    b.HasOne("AccArenas.Api.Domain.Models.ApplicationUser", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("AccArenas.Api.Domain.Models.Order", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("AccArenas.Api.Domain.Models.InquiryMessage", b =>
+                {
+                    b.HasOne("AccArenas.Api.Domain.Models.Inquiry", "Inquiry")
+                        .WithMany("Messages")
+                        .HasForeignKey("InquiryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AccArenas.Api.Domain.Models.ApplicationUser", "Sender")
+                        .WithMany()
+                        .HasForeignKey("SenderUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Inquiry");
+
+                    b.Navigation("Sender");
+                });
+
             modelBuilder.Entity("AccArenas.Api.Domain.Models.Order", b =>
                 {
+                    b.HasOne("AccArenas.Api.Domain.Models.ApplicationUser", "AssignedSales")
+                        .WithMany()
+                        .HasForeignKey("AssignedToSalesId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("AccArenas.Api.Domain.Models.ApplicationUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("AssignedSales");
 
                     b.Navigation("User");
                 });
@@ -916,8 +1084,15 @@ namespace AccArenas.Api.Migrations
                     b.Navigation("Authorization");
                 });
 
+            modelBuilder.Entity("AccArenas.Api.Domain.Models.Inquiry", b =>
+                {
+                    b.Navigation("Messages");
+                });
+
             modelBuilder.Entity("AccArenas.Api.Domain.Models.Order", b =>
                 {
+                    b.Navigation("FulfillmentEvents");
+
                     b.Navigation("Items");
                 });
 
