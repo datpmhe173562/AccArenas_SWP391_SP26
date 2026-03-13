@@ -1,8 +1,9 @@
+using System.Globalization;
 using System.Net;
-using System.Security.Cryptography;
-using System.Text;
 using AccArenas.Api.Application.DTOs;
+using AccArenas.Api.Application.Helpers;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 
 namespace AccArenas.Api.Application.Services
 {
@@ -15,118 +16,127 @@ namespace AccArenas.Api.Application.Services
     public class VnPayService : IVnPayService
     {
         private readonly IConfiguration _configuration;
+        private readonly ILogger<VnPayService> _logger;
 
-        public VnPayService(IConfiguration configuration)
+        public VnPayService(IConfiguration configuration, ILogger<VnPayService> logger)
         {
             _configuration = configuration;
+            _logger = logger;
         }
 
         public string CreatePaymentUrl(HttpContext context, PaymentInformationRequest model)
         {
-            var timeZoneById = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            var vnpay = new VnPayLibrary();
+
+            var timeZoneId = OperatingSystem.IsWindows()
+                ? "SE Asia Standard Time"
+                : "Asia/Ho_Chi_Minh";
+            var timeZoneById = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
             var timeNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZoneById);
             var tick = DateTime.Now.Ticks.ToString();
 
-            var vnp_TmnCode = _configuration["VnPay:TmnCode"];
-            var vnp_HashSecret = _configuration["VnPay:HashSecret"];
-            var vnp_Url = _configuration["VnPay:BaseUrl"];
-            var vnp_Returnurl = _configuration["VnPay:ReturnUrl"];
+            vnpay.AddRequestData("vnp_Version", "2.1.0");
+            vnpay.AddRequestData("vnp_Command", "pay");
+            vnpay.AddRequestData("vnp_TmnCode", _configuration["VnPay:TmnCode"]!);
+            vnpay.AddRequestData(
+                "vnp_Amount",
+                (model.Amount * 100).ToString("F0", CultureInfo.InvariantCulture)
+            );
+            vnpay.AddRequestData("vnp_CreateDate", timeNow.ToString("yyyyMMddHHmmss"));
+            vnpay.AddRequestData("vnp_CurrCode", "VND");
+            vnpay.AddRequestData("vnp_IpAddr", Utils.GetIpAddress(context));
+            vnpay.AddRequestData("vnp_Locale", "vn");
+            vnpay.AddRequestData("vnp_OrderInfo", "Payment for order:" + model.OrderId);
+            vnpay.AddRequestData("vnp_OrderType", "other");
+            vnpay.AddRequestData("vnp_ReturnUrl", _configuration["VnPay:ReturnUrl"]!);
+            // Use full Guid string for vnp_TxnRef
+            vnpay.AddRequestData("vnp_TxnRef", model.OrderId);
 
-            var requestData = new SortedList<string, string>(new VnPayCompare());
-            requestData.Add("vnp_Version", "2.1.0");
-            requestData.Add("vnp_Command", "pay");
-            requestData.Add("vnp_TmnCode", vnp_TmnCode!);
-            requestData.Add("vnp_Amount", (model.Amount * 100).ToString());
-            requestData.Add("vnp_CreateDate", timeNow.ToString("yyyyMMddHHmmss"));
-            requestData.Add("vnp_CurrCode", "VND");
-            requestData.Add("vnp_IpAddr", GetIpAddress(context));
-            requestData.Add("vnp_Locale", "vn");
-            requestData.Add("vnp_OrderInfo", $"Thanh toan don hang {model.OrderId}");
-            requestData.Add("vnp_OrderType", "other"); // default
-            requestData.Add("vnp_ReturnUrl", vnp_Returnurl!);
-            requestData.Add("vnp_TxnRef", $"{model.OrderId}_{tick}");
+            var paymentUrl = vnpay.CreateRequestUrl(
+                _configuration["VnPay:BaseUrl"]!,
+                _configuration["VnPay:HashSecret"]!
+            );
 
-            var rawData = string.Join("&", requestData.Select(kvp => $"{kvp.Key}={WebUtility.UrlEncode(kvp.Value)}"));
-            var vnp_SecureHash = HmacSHA512(vnp_HashSecret!, rawData);
-            
-            return $"{vnp_Url}?{rawData}&vnp_SecureHash={vnp_SecureHash}";
+            _logger.LogInformation("VNPay CreatePayment URL created: {Url}", paymentUrl);
+
+            return paymentUrl;
         }
 
         public PaymentResponse PaymentExecute(IQueryCollection collections)
         {
-            var responseData = new SortedList<string, string>(new VnPayCompare());
-            var vnp_SecureHash = string.Empty;
-            
+            var vnpay = new VnPayLibrary();
             foreach (var (key, value) in collections)
             {
                 if (!string.IsNullOrEmpty(key) && key.StartsWith("vnp_"))
                 {
-                    if (key == "vnp_SecureHash")
-                    {
-                        vnp_SecureHash = value.ToString();
-                    }
-                    else if (key != "vnp_SecureHashType")
-                    {
-                        responseData.Add(key, value.ToString());
-                    }
+                    vnpay.AddResponseData(key, value.ToString());
                 }
             }
 
-            var orderId = responseData.ContainsKey("vnp_TxnRef") ? responseData["vnp_TxnRef"] : string.Empty;
-            var vnp_ResponseCode = responseData.ContainsKey("vnp_ResponseCode") ? responseData["vnp_ResponseCode"] : string.Empty;
-            var vnp_TransactionId = responseData.ContainsKey("vnp_TransactionNo") ? responseData["vnp_TransactionNo"] : string.Empty;
+            var vnp_SecureHash = collections
+                .FirstOrDefault(p => p.Key == "vnp_SecureHash")
+                .Value.ToString();
+            bool checkSignature = vnpay.ValidateSignature(
+                vnp_SecureHash!,
+                _configuration["VnPay:HashSecret"]!
+            );
 
-            var vnp_HashSecret = _configuration["VnPay:HashSecret"];
-            var rawData = string.Join("&", responseData.Select(kvp => $"{kvp.Key}={WebUtility.UrlEncode(kvp.Value)}"));
-            var checkSignature = HmacSHA512(vnp_HashSecret!, rawData);
-            
-            bool isSuccess = checkSignature == vnp_SecureHash && vnp_ResponseCode == "00";
+            var txnRef = vnpay.GetResponseData("vnp_TxnRef");
+            var vnp_ResponseCode = vnpay.GetResponseData("vnp_ResponseCode");
+            var vnp_TransactionId = vnpay.GetResponseData("vnp_TransactionNo");
+
+            _logger.LogInformation(
+                "VNPay PaymentReturn received. txnRef={TxnRef}, respCode={RespCode}, signatureValid={IsValid}",
+                txnRef,
+                vnp_ResponseCode,
+                checkSignature
+            );
+
+            bool isSuccess = checkSignature && vnp_ResponseCode == "00";
+
+            // Reconstruct the OrderId robustly
+            string orderId = string.Empty;
+            var orderInfo = vnpay.GetResponseData("vnp_OrderInfo");
+
+            // Try txnRef first
+            if (!string.IsNullOrEmpty(txnRef) && Guid.TryParse(txnRef, out var guidTxn))
+            {
+                orderId = guidTxn.ToString();
+            }
+            // Fallback to orderInfo if txnRef is truncated or mangled
+            else if (!string.IsNullOrEmpty(orderInfo))
+            {
+                // In case it has prefix "Payment for order:", try to extract Guid
+                var match = System.Text.RegularExpressions.Regex.Match(orderInfo, @"([a-fA-F0-9-]{36})");
+                if (match.Success && Guid.TryParse(match.Value, out var guidInfo))
+                {
+                    orderId = guidInfo.ToString();
+                }
+                else if (Guid.TryParse(orderInfo, out var guidInfoDirect))
+                {
+                    orderId = guidInfoDirect.ToString();
+                }
+            }
+            // Final fallback to hex parsing if dashes were stripped in txnRef
+            if (string.IsNullOrEmpty(orderId) && !string.IsNullOrEmpty(txnRef) && txnRef.Length >= 32)
+            {
+                var hex = txnRef.Substring(0, 32);
+                if (Guid.TryParseExact(hex, "N", out var guidN))
+                {
+                    orderId = guidN.ToString();
+                }
+            }
 
             return new PaymentResponse
             {
                 Success = isSuccess,
                 PaymentMethod = "VnPay",
-                OrderDescription = responseData.ContainsKey("vnp_OrderInfo") ? responseData["vnp_OrderInfo"] : string.Empty,
-                OrderId = orderId.Split('_')[0], // Extract original orderId without tick
+                OrderDescription = vnpay.GetResponseData("vnp_OrderInfo"),
+                OrderId = orderId,
                 TransactionId = vnp_TransactionId,
                 Token = vnp_SecureHash,
-                VnPayResponseCode = vnp_ResponseCode
+                VnPayResponseCode = vnp_ResponseCode,
             };
-        }
-
-        private static string GetIpAddress(HttpContext context)
-        {
-            return context.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
-        }
-
-        private static string HmacSHA512(string key, string inputData)
-        {
-            var hash = new StringBuilder();
-            byte[] keyBytes = Encoding.UTF8.GetBytes(key);
-            byte[] inputBytes = Encoding.UTF8.GetBytes(inputData);
-            using (var hmac = new HMACSHA512(keyBytes))
-            {
-                byte[] hashValue = hmac.ComputeHash(inputBytes);
-                foreach (var theByte in hashValue)
-                {
-                    hash.Append(theByte.ToString("x2"));
-                }
-            }
-
-            return hash.ToString();
-        }
-    }
-
-    public class VnPayCompare : IComparer<string>
-    {
-        public int Compare(string? x, string? y)
-        {
-            if (x == y) return 0;
-            if (x == null) return -1;
-            if (y == null) return 1;
-            var vnpCompare = string.Compare(x, y, StringComparison.Ordinal);
-            if (vnpCompare != 0) return vnpCompare;
-            return string.Compare(x, y, StringComparison.Ordinal);
         }
     }
 }

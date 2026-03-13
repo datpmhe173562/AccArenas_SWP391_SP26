@@ -74,5 +74,52 @@ namespace AccArenas.Api.Infrastructure.Repositories
 
             return await query.SumAsync(o => o.TotalAmount);
         }
+
+        public async Task<IEnumerable<Order>> GetOrdersAssignedToAsync(Guid salesUserId)
+        {
+            return await _dbSet
+                .Include(o => o.Items)
+                    .ThenInclude(oi => oi.GameAccount)
+                .Include(o => o.FulfillmentEvents)
+                .Include(o => o.AssignedSales)
+                .Where(o => o.AssignedToSalesId == salesUserId)
+                .OrderByDescending(o => o.CreatedAt)
+                .ToListAsync();
+        }
+
+        public async Task<int> CountOrdersAssignedToAsync(Guid salesUserId, string? status = null)
+        {
+            var query = _dbSet.AsQueryable().Where(o => o.AssignedToSalesId == salesUserId);
+
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                query = query.Where(o => o.Status.ToLower() == status.ToLower());
+            }
+
+            return await query.CountAsync();
+        }
+
+        public async Task<decimal> SumRevenueAssignedToAsync(
+            Guid salesUserId,
+            DateTime? fromDate = null,
+            DateTime? toDate = null,
+            string? status = null
+        )
+        {
+            var query = _dbSet.AsQueryable().Where(o => o.AssignedToSalesId == salesUserId);
+
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                query = query.Where(o => o.Status.ToLower() == status.ToLower());
+            }
+
+            if (fromDate.HasValue)
+                query = query.Where(o => o.CreatedAt.Date >= fromDate.Value.Date);
+
+            if (toDate.HasValue)
+                query = query.Where(o => o.CreatedAt.Date <= toDate.Value.Date);
+
+            return await query.SumAsync(o => o.TotalAmount);
+        }
     }
 }

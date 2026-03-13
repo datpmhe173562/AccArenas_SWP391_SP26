@@ -17,6 +17,9 @@ namespace AccArenas.Api.Domain.Interfaces
         IFeedbackRepository Feedbacks { get; }
         IGameAccountRepository GameAccounts { get; }
         IOrderRepository Orders { get; }
+        IFulfillmentEventRepository FulfillmentEvents { get; }
+        IInquiryRepository Inquiries { get; }
+        IRepository<InquiryMessage> InquiryMessages { get; }
         IPromotionRepository Promotions { get; }
         ISliderRepository Sliders { get; }
 

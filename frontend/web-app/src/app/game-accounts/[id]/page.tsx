@@ -153,14 +153,20 @@ export default function GameAccountDetailPage() {
                             </div>
                             
                             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 mt-auto">
-                                <button
-                                    disabled={!account.isAvailable}
-                                    onClick={() => router.push(`/checkout?id=${account.id}`)}
-                                    className="flex-1 py-4 px-8 bg-indigo-600 text-white rounded-2xl font-black text-sm uppercase tracking-[0.2em] shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                                >
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-                                    {account.isAvailable ? 'Mua tài khoản ngay' : 'Đã hết hàng'}
-                                </button>
+                                {account.isAvailable ? (
+                                    <button
+                                        onClick={() => router.push(`/checkout?id=${account.id}`)}
+                                        className="flex-1 py-4 px-8 bg-indigo-600 text-white rounded-2xl font-black text-sm uppercase tracking-[0.2em] shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
+                                    >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                                        Mua tài khoản ngay
+                                    </button>
+                                ) : (
+                                    <div className="flex-1 py-4 px-8 bg-gray-100 text-gray-400 rounded-2xl font-black text-sm uppercase tracking-[0.2em] flex items-center justify-center gap-2 border-2 border-dashed border-gray-200">
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+                                        Sản phẩm đã bán
+                                    </div>
+                                )}
                                 <button className="px-6 py-4 border-2 border-gray-100 text-gray-400 rounded-2xl font-black text-xs uppercase tracking-widest hover:border-indigo-100 hover:text-indigo-600 transition-all">
                                     Ưa thích
                                 </button>
