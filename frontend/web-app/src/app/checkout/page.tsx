@@ -9,13 +9,14 @@ import { formatCurrency } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import { orderService } from "@/services/orderService";
 import { showError } from "@/lib/sweetalert";
+import { isCustomer } from "@/lib/roleUtils";
 
 function CheckoutContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const id = searchParams.get("id");
 
-    const { isAuthenticated, isLoading: authLoading } = useAuth();
+    const { user, isAuthenticated, isLoading: authLoading } = useAuth();
     const { data: account, isLoading: accountLoading } = useGameAccount(id || "", !!id);
     
     const [isProcessing, setIsProcessing] = useState(false);
@@ -24,10 +25,16 @@ function CheckoutContent() {
     const [isValidating, setIsValidating] = useState(false);
 
     useEffect(() => {
-        if (!authLoading && !isAuthenticated) {
-            router.push(`/auth/login?redirect=/checkout?id=${id}`);
+        if (!authLoading) {
+            if (!isAuthenticated) {
+                router.push(`/auth/login?redirect=/checkout?id=${id}`);
+            } else if (!isCustomer(user)) {
+                // Not a customer, can't buy
+                showError("Chức năng mua hàng chỉ dành cho tài khoản Khách hàng.");
+                router.push('/');
+            }
         }
-    }, [isAuthenticated, authLoading, router, id]);
+    }, [isAuthenticated, authLoading, user, router, id]);
 
     const handleApplyVoucher = async () => {
         if (!voucherCode.trim()) return;
