@@ -18,7 +18,8 @@ interface MenuItem {
 
 const menuItems: MenuItem[] = [
     { label: "Tổng quan", href: "/sales" },
-    { label: "Đơn được phân công", href: "/sales/orders" },
+    { label: "Lịch sử đã bán", href: "/sales/all-orders" },
+    { label: "Phản hồi từ khách", href: "/sales/feedbacks" },
     { label: "Yêu cầu hỗ trợ", href: "/sales/inquiries" },
 ];
 

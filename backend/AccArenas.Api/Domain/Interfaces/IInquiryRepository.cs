@@ -9,6 +9,8 @@ namespace AccArenas.Api.Domain.Interfaces
     {
         Task<IEnumerable<Inquiry>> GetByOrderAsync(Guid orderId);
         Task<IEnumerable<Inquiry>> GetBySalesUserAsync(Guid salesUserId);
+        Task<IEnumerable<Inquiry>> GetByCustomerAsync(Guid customerUserId);
         Task<Inquiry?> GetWithMessagesAsync(Guid id);
+        Task<IEnumerable<Inquiry>> GetAllInquiriesWithMessagesAsync();
     }
 }

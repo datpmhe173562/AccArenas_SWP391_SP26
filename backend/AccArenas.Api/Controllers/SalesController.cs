@@ -25,6 +25,7 @@ namespace AccArenas.Api.Controllers
             "Processing",
             "Delivered",
             "Failed",
+            "Completed"
         };
 
         private readonly IUnitOfWork _unitOfWork;
@@ -48,6 +49,21 @@ namespace AccArenas.Api.Controllers
             var orders = await _unitOfWork.Orders.GetOrdersAssignedToAsync(salesUserId.Value);
             var dto = orders.Select(MapOrderToDto);
             return Ok(new ApiResponse<IEnumerable<OrderDto>> { Success = true, Data = dto });
+        }
+
+        [HttpGet("orders/{id}")]
+        public async Task<IActionResult> GetOrderDetails(Guid id)
+        {
+            var salesUserId = GetUserId();
+            if (salesUserId == null) return Unauthorized();
+
+            var order = await _unitOfWork.Orders.GetOrderByIdWithItemsAsync(id);
+            if (order == null)
+            {
+                return NotFound(new ApiResponse<string> { Success = false, Message = "Đơn hàng không tồn tại." });
+            }
+
+            return Ok(new ApiResponse<OrderDto> { Success = true, Data = MapOrderToDto(order) });
         }
 
         [HttpPatch("orders/{id}/status")]
@@ -241,43 +257,85 @@ namespace AccArenas.Api.Controllers
         [HttpGet("stats/me")]
         public async Task<IActionResult> GetMyStats()
         {
-            var salesUserId = GetUserId();
-            if (salesUserId == null)
-            {
-                return Unauthorized(
-                    new ApiResponse<string> { Success = false, Message = "User not found" }
-                );
-            }
-
-            var orders = await _unitOfWork.Orders.GetOrdersAssignedToAsync(salesUserId.Value);
-            var delivered = orders
-                .Where(o => o.Status.Equals("Delivered", StringComparison.OrdinalIgnoreCase))
+            var allOrders = await _unitOfWork.Orders.GetAllAsync();
+            var soldStatuses = new[] { "Paid", "Processing", "Delivered", "Completed" };
+            
+            var soldOrders = allOrders
+                .Where(o => soldStatuses.Contains(o.Status, StringComparer.OrdinalIgnoreCase))
                 .ToList();
-            var pending = orders
-                .Where(o => o.Status.Equals("Pending", StringComparison.OrdinalIgnoreCase))
-                .Count();
-            var processing = orders
-                .Where(o => o.Status.Equals("Processing", StringComparison.OrdinalIgnoreCase))
-                .Count();
-            var failed = orders
-                .Where(o => o.Status.Equals("Failed", StringComparison.OrdinalIgnoreCase))
-                .Count();
+
+            var allFeedbacks = await _unitOfWork.Feedbacks.GetAllAsync();
+            var allInquiries = await _unitOfWork.Inquiries.GetAllAsync();
+            var allAccounts = await _unitOfWork.GameAccounts.GetAllAsync();
 
             var stats = new
             {
-                totalOrders = orders.Count(),
-                delivered = delivered.Count,
-                pending,
-                processing,
-                failed,
-                revenueDelivered = delivered.Sum(o => o.TotalAmount),
+                totalSold = soldOrders.Count,
+                totalRevenue = soldOrders.Sum(o => o.TotalAmount),
+                feedbackCount = allFeedbacks.Count(),
+                averageRating = allFeedbacks.Any() ? allFeedbacks.Average(f => (double)f.Rating) : 0,
+                totalInquiries = allInquiries.Count(),
+                totalAvailableAccounts = allAccounts.Count(a => a.IsAvailable),
+                totalSoldAccounts = allAccounts.Count(a => !a.IsAvailable),
+                processing = soldOrders.Count(o => o.Status.Equals("Processing", StringComparison.OrdinalIgnoreCase)),
+                failed = allOrders.Count(o => o.Status.Equals("Failed", StringComparison.OrdinalIgnoreCase)),
             };
 
             return Ok(new ApiResponse<object> { Success = true, Data = stats });
         }
 
-        [HttpGet("inquiries")]
-        public async Task<IActionResult> GetMyInquiries()
+        [HttpGet("charts")]
+        public async Task<IActionResult> GetSalesCharts()
+        {
+            var orders = await _unitOfWork.Orders.GetAllAsync();
+            var successfulStatuses = new[] { "Completed", "Paid", "Processing", "Delivered" };
+
+            // Status distribution (System wide)
+            var statusDistribution = orders
+                .GroupBy(o => o.Status)
+                .Select(g => new
+                {
+                    Status = g.Key,
+                    Count = g.Count()
+                });
+
+            // Weekly performance (System wide) - Now including Revenue Trend
+            var sevenDaysAgo = DateTime.UtcNow.Date.AddDays(-7);
+            var weeklyPerformance = Enumerable.Range(0, 8)
+                .Select(i => sevenDaysAgo.AddDays(i))
+                .Select(date => new
+                {
+                    Date = date.ToString("yyyy-MM-dd"),
+                    Count = orders.Count(o => o.CreatedAt.Date == date && successfulStatuses.Contains(o.Status)),
+                    Revenue = orders.Where(o => o.CreatedAt.Date == date && successfulStatuses.Contains(o.Status)).Sum(o => o.TotalAmount)
+                });
+
+            return Ok(new ApiResponse<object>
+            { 
+                Success = true, 
+                Data = new {
+                    StatusDistribution = statusDistribution,
+                    WeeklyPerformance = weeklyPerformance
+                }
+            });
+        }
+
+        [HttpGet("all-orders")]
+        public async Task<IActionResult> GetAllSoldOrders()
+        {
+            // Fetch all orders with "sold" related statuses
+            var soldStatuses = new[] { "Paid", "Processing", "Delivered", "Completed" };
+            var allOrders = await _unitOfWork.Orders.GetAllAsync();
+            var soldOrders = allOrders
+                .Where(o => soldStatuses.Contains(o.Status, StringComparer.OrdinalIgnoreCase))
+                .OrderByDescending(o => o.CreatedAt);
+
+            var dto = soldOrders.Select(MapOrderToDto);
+            return Ok(new ApiResponse<IEnumerable<OrderDto>> { Success = true, Data = dto });
+        }
+
+        [HttpGet("feedbacks")]
+        public async Task<IActionResult> GetAssignedFeedbacks()
         {
             var salesUserId = GetUserId();
             if (salesUserId == null)
@@ -287,7 +345,15 @@ namespace AccArenas.Api.Controllers
                 );
             }
 
-            var inquiries = await _unitOfWork.Inquiries.GetBySalesUserAsync(salesUserId.Value);
+            var feedbacks = await _unitOfWork.Feedbacks.GetBySalesUserAsync(salesUserId.Value);
+            var dto = feedbacks.Select(MapFeedbackToDto);
+            return Ok(new ApiResponse<IEnumerable<FeedbackDto>> { Success = true, Data = dto });
+        }
+
+        [HttpGet("inquiries")]
+        public async Task<IActionResult> GetMyInquiries()
+        {
+            var inquiries = await _unitOfWork.Inquiries.GetAllInquiriesWithMessagesAsync();
             var dto = inquiries.Select(MapInquiryToDto);
             return Ok(new ApiResponse<IEnumerable<InquiryDto>> { Success = true, Data = dto });
         }
@@ -304,15 +370,9 @@ namespace AccArenas.Api.Controllers
             }
 
             var inquiry = await _unitOfWork.Inquiries.GetWithMessagesAsync(id);
-            if (
-                inquiry == null
-                || inquiry.Order == null
-                || inquiry.Order.AssignedToSalesId != salesUserId
-            )
+            if (inquiry == null)
             {
-                return NotFound(
-                    new ApiResponse<string> { Success = false, Message = "Inquiry not found" }
-                );
+                return NotFound(new ApiResponse<string> { Success = false, Message = "Inquiry not found" });
             }
 
             return Ok(
@@ -342,15 +402,9 @@ namespace AccArenas.Api.Controllers
             }
 
             var inquiry = await _unitOfWork.Inquiries.GetWithMessagesAsync(id);
-            if (
-                inquiry == null
-                || inquiry.Order == null
-                || inquiry.Order.AssignedToSalesId != salesUserId
-            )
+            if (inquiry == null)
             {
-                return NotFound(
-                    new ApiResponse<string> { Success = false, Message = "Inquiry not found" }
-                );
+                return NotFound(new ApiResponse<string> { Success = false, Message = "Inquiry not found" });
             }
 
             inquiry.Status = "WaitingCustomer"; // sales replied, waiting for customer
@@ -415,6 +469,20 @@ namespace AccArenas.Api.Controllers
             };
         }
 
+        private FeedbackDto MapFeedbackToDto(Feedback feedback)
+        {
+            return new FeedbackDto
+            {
+                Id = feedback.Id,
+                OrderId = feedback.OrderId,
+                UserId = feedback.UserId,
+                UserName = feedback.User?.UserName ?? feedback.User?.FullName,
+                Rating = feedback.Rating,
+                Comment = feedback.Comment,
+                CreatedAt = feedback.CreatedAt
+            };
+        }
+
         private InquiryDto MapInquiryToDto(Inquiry inquiry)
         {
             return new InquiryDto
@@ -455,7 +523,9 @@ namespace AccArenas.Api.Controllers
                     || targetStatus.Equals("Delivered", StringComparison.OrdinalIgnoreCase)
                     || targetStatus.Equals("Failed", StringComparison.OrdinalIgnoreCase),
                 "processing" => targetStatus.Equals("Delivered", StringComparison.OrdinalIgnoreCase)
-                    || targetStatus.Equals("Failed", StringComparison.OrdinalIgnoreCase),
+                    || targetStatus.Equals("Failed", StringComparison.OrdinalIgnoreCase)
+                    || targetStatus.Equals("Completed", StringComparison.OrdinalIgnoreCase),
+                "delivered" => targetStatus.Equals("Completed", StringComparison.OrdinalIgnoreCase),
                 _ => false,
             };
         }

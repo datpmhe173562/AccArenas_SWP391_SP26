@@ -3,9 +3,10 @@
 import { useEffect, useState } from "react";
 import MarketerLayout from "@/components/layout/MarketerLayout";
 import Link from "next/link";
-import { DashboardService, MarketerStats, RevenueChartData } from "@/services/dashboardService";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { format, startOfMonth, endOfMonth } from "date-fns";
+import { DashboardService, MarketerStats } from "@/services/dashboardService";
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
+
+const COLORS = ["#4f46e5", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
 
 export default function MarketerDashboard() {
     const [stats, setStats] = useState<MarketerStats>({
@@ -13,27 +14,19 @@ export default function MarketerDashboard() {
         totalCategories: 0,
         totalVouchers: 0,
     });
-    const [chartData, setChartData] = useState<RevenueChartData[]>([]);
+    const [categoryData, setCategoryData] = useState<{ name: string; count: number }[]>([]);
     const [loading, setLoading] = useState(true);
-    const [selectedMonth, setSelectedMonth] = useState(format(new Date(), "yyyy-MM"));
 
     useEffect(() => {
         const fetchDashboardData = async () => {
             try {
-                // Fetch stats sumary
+                // Fetch stats summary
                 const statsData = await DashboardService.getMarketerStats();
                 setStats(statsData);
 
-                // Fetch chart data based on selected month
-                const [year, month] = selectedMonth.split("-");
-                const startDate = startOfMonth(new Date(Number(year), Number(month) - 1));
-                const endDate = endOfMonth(new Date(Number(year), Number(month) - 1));
-                
-                const formattedStart = format(startDate, "yyyy-MM-dd");
-                const formattedEnd = format(endDate, "yyyy-MM-dd");
-
-                const chartStats = await DashboardService.getMarketerRevenueChart(formattedStart, formattedEnd);
-                setChartData(chartStats);
+                // Fetch category distribution
+                const distribution = await DashboardService.getMarketerCategoryDistribution();
+                setCategoryData(distribution);
             } catch (error) {
                 console.error("Failed to fetch marketer dashboard data:", error);
             } finally {
@@ -42,17 +35,7 @@ export default function MarketerDashboard() {
         };
 
         fetchDashboardData();
-    }, [selectedMonth]);
-
-    // Format currency for chart tooltip
-    const formatCurrency = (value: number) => {
-        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
-    };
-
-    // Format date for chart XAxis
-    const formatDay = (dateStr: string) => {
-        return format(new Date(dateStr), "dd/MM");
-    };
+    }, []);
 
     return (
         <MarketerLayout>
@@ -64,7 +47,7 @@ export default function MarketerDashboard() {
                             Dashboard Marketing 
                         </h1>
                         <p className="text-gray-600 font-medium tracking-tight">
-                            Tổng quan sản phẩm, danh mục và doanh thu chiến dịch
+                            Tổng quan sản phẩm, danh mục và hiệu quả khuyến mãi
                         </p>
                     </div>
                 </div>
@@ -132,79 +115,50 @@ export default function MarketerDashboard() {
                     </div>
                 </div>
 
-                {/* Revenue Chart Section */}
+                {/* Category Distribution Section */}
                 <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 pb-6 border-b border-gray-100 border-dashed gap-4">
                         <div>
                             <h2 className="text-xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
                                 <span className="w-2 h-6 bg-indigo-500 rounded-full inline-block"></span>
-                                Biểu đồ doanh thu
+                                Phân bổ sản phẩm
                             </h2>
-                            <p className="text-sm text-gray-500 mt-1 font-medium">Theo dõi tăng trưởng doanh số của sàn</p>
-                        </div>
-                        
-                        <div className="flex items-center gap-3 bg-gray-50 p-2 rounded-xl border border-gray-200 shadow-inner">
-                            <svg className="w-5 h-5 text-gray-400 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                            <input 
-                                type="month" 
-                                value={selectedMonth}
-                                onChange={(e) => setSelectedMonth(e.target.value)}
-                                className="bg-transparent border-none text-sm font-bold text-gray-700 outline-none pr-3 cursor-pointer"
-                            />
+                            <p className="text-sm text-gray-500 mt-1 font-medium">Tỷ lệ account game theo từng danh mục</p>
                         </div>
                     </div>
 
-                    <div className="h-[350px] w-full mt-6">
+                    <div className="h-[400px] w-full mt-6">
                         {loading ? (
                             <div className="w-full h-full flex items-center justify-center">
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
                             </div>
-                        ) : chartData.length > 0 ? (
+                        ) : categoryData.length > 0 ? (
                             <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 20, bottom: 0 }}>
-                                    <defs>
-                                        <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.3}/>
-                                            <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
-                                        </linearGradient>
-                                    </defs>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
-                                    <XAxis 
-                                        dataKey="date" 
-                                        tickFormatter={formatDay}
-                                        axisLine={false} 
-                                        tickLine={false} 
-                                        tick={{ fill: '#6B7280', fontSize: 12, fontWeight: 500 }}
-                                        dy={10}
-                                    />
-                                    <YAxis 
-                                        tickFormatter={(value) => value >= 1000000 ? `${value / 1000000}M` : `${value / 1000}k`}
-                                        axisLine={false} 
-                                        tickLine={false} 
-                                        tick={{ fill: '#6B7280', fontSize: 12, fontWeight: 500 }}
-                                        dx={-10}
-                                    />
+                                <PieChart>
+                                    <Pie
+                                        data={categoryData}
+                                        cx="50%"
+                                        cy="50%"
+                                        labelLine={false}
+                                        label={({ name, percent }) => `${name} (${((percent || 0) * 100).toFixed(0)}%)`}
+                                        outerRadius={130}
+                                        fill="#8884d8"
+                                        dataKey="count"
+                                    >
+                                        {categoryData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        ))}
+                                    </Pie>
                                     <Tooltip 
-                                        formatter={(value: any) => [formatCurrency(value as number), "Doanh thu"]}
-                                        labelFormatter={(label) => `Ngày ${formatDay(label)}`}
-                                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)', fontWeight: 600 }}
-                                        itemStyle={{ color: '#4f46e5', fontWeight: 800 }}
+                                        formatter={(value: any) => [`${value} sản phẩm`, "Số lượng"]}
+                                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
                                     />
-                                    <Area 
-                                        type="monotone" 
-                                        dataKey="revenue" 
-                                        stroke="#4f46e5" 
-                                        strokeWidth={3}
-                                        fillOpacity={1} 
-                                        fill="url(#colorRevenue)" 
-                                        activeDot={{ r: 6, strokeWidth: 0, fill: '#4f46e5' }}
-                                    />
-                                </AreaChart>
+                                    <Legend verticalAlign="bottom" height={36}/>
+                                </PieChart>
                             </ResponsiveContainer>
                         ) : (
                             <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
-                                <svg className="w-16 h-16 mb-4 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
-                                <p>Không có dữ liệu trong tháng này</p>
+                                <p>Không có dữ liệu danh mục</p>
                             </div>
                         )}
                     </div>

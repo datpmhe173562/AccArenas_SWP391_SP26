@@ -30,6 +30,16 @@ namespace AccArenas.Api.Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<Feedback>> GetBySalesUserAsync(Guid salesUserId)
+        {
+            return await _dbSet
+                .Include(f => f.User)
+                .Include(f => f.Order)
+                .Where(f => f.Order != null && f.Order.AssignedToSalesId == salesUserId)
+                .OrderByDescending(f => f.CreatedAt)
+                .ToListAsync();
+        }
+
         public async Task<double> GetAverageRatingAsync(Guid? gameAccountId = null)
         {
             var query = _dbSet.AsQueryable();
