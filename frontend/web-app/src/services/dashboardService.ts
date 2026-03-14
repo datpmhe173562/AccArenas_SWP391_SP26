@@ -37,4 +37,14 @@ export const DashboardService = {
         const response = await axiosInstance.get(`/api/dashboard/marketer/revenue-chart?${params.toString()}`);
         return response.data;
     },
+
+    getMarketerCategoryDistribution: async (): Promise<{ name: string; count: number }[]> => {
+        const response = await axiosInstance.get("/api/dashboard/marketer/category-distribution");
+        return response.data;
+    },
+
+    getAdminCharts: async (): Promise<{ revenueGrowth: any[]; userGrowth: any[] }> => {
+        const response = await axiosInstance.get("/api/dashboard/admin/charts");
+        return response.data;
+    },
 };

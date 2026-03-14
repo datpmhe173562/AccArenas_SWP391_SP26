@@ -13,6 +13,14 @@ export const salesService = {
         return res.data.data || [];
     },
 
+    async getOrder(id: string): Promise<SalesOrder> {
+        const res = await axiosInstance.get<ApiResponse<SalesOrder>>(`/api/sales/orders/${id}`);
+        if (!res.data.success || !res.data.data) {
+            throw new Error(res.data.message || "Không tìm thấy đơn hàng");
+        }
+        return res.data.data;
+    },
+
     async updateOrderStatus(id: string, status: string, reason?: string): Promise<SalesOrder> {
         const payload: UpdateOrderStatusRequest = { status, reason };
         const res = await axiosInstance.patch<ApiResponse<SalesOrder>>(`/api/sales/orders/${id}/status`, payload);
@@ -55,6 +63,21 @@ export const salesService = {
         if (!res.data.success || !res.data.data) {
             throw new Error(res.data.message || "Không thể gửi phản hồi");
         }
+        return res.data.data;
+    },
+
+    async getAllOrders(): Promise<SalesOrder[]> {
+        const res = await axiosInstance.get<ApiResponse<SalesOrder[]>>("/api/sales/all-orders");
+        return res.data.data || [];
+    },
+
+    async getFeedbacks(): Promise<any[]> {
+        const res = await axiosInstance.get<ApiResponse<any[]>>("/api/sales/feedbacks");
+        return res.data.data || [];
+    },
+
+    async getCharts(): Promise<any> {
+        const res = await axiosInstance.get<ApiResponse<any>>("/api/sales/charts");
         return res.data.data;
     },
 };
