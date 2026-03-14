@@ -31,9 +31,10 @@ namespace AccArenas.Api.Controllers
             var totalProducts = await _context.GameAccounts.CountAsync();
             var totalOrders = await _context.Orders.CountAsync();
             
-            // Total Revenue from completed orders
+            // Total Revenue from completed/paid/processing/delivered orders
+            var successfulStatuses = new[] { "Completed", "Paid", "Processing", "Delivered" };
             var totalRevenue = await _context.Orders
-                .Where(o => o.Status == "Completed")
+                .Where(o => successfulStatuses.Contains(o.Status))
                 .SumAsync(o => o.TotalAmount);
 
             return Ok(new
@@ -65,6 +66,63 @@ namespace AccArenas.Api.Controllers
             });
         }
 
+        [HttpGet("marketer/category-distribution")]
+        [Authorize(Roles = "Admin,MarketingStaff")]
+        public async Task<IActionResult> GetCategoryDistribution()
+        {
+            var distribution = await _context.Categories
+                .Select(c => new
+                {
+                    Name = c.Name,
+                    Count = _context.GameAccounts.Count(ga => ga.CategoryId == c.Id)
+                })
+                .ToListAsync();
+
+            return Ok(distribution);
+        }
+
+        [HttpGet("admin/charts")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAdminCharts()
+        {
+            var thirtyDaysAgo = DateTime.UtcNow.Date.AddDays(-30);
+
+            // Revenue growth
+            var successfulStatuses = new[] { "Completed", "Paid", "Processing", "Delivered" };
+            var orders = await _context.Orders
+                .Where(o => successfulStatuses.Contains(o.Status) && o.CreatedAt >= thirtyDaysAgo)
+                .Select(o => new { o.CreatedAt, o.TotalAmount })
+                .ToListAsync();
+
+            var revenueGrowth = Enumerable.Range(0, 31)
+                .Select(i => thirtyDaysAgo.AddDays(i))
+                .Select(date => new
+                {
+                    Date = date.ToString("yyyy-MM-dd"),
+                    Revenue = orders.Where(o => o.CreatedAt.Date == date).Sum(o => o.TotalAmount)
+                });
+
+            // User growth
+            var users = await _userManager.Users
+                .Where(u => u.CreatedAt >= thirtyDaysAgo)
+                .Select(u => u.CreatedAt)
+                .ToListAsync();
+
+            var userGrowth = Enumerable.Range(0, 31)
+                .Select(i => thirtyDaysAgo.AddDays(i))
+                .Select(date => new
+                {
+                    Date = date.ToString("yyyy-MM-dd"),
+                    Count = users.Count(u => u.Date == date)
+                });
+
+            return Ok(new
+            {
+                RevenueGrowth = revenueGrowth,
+                UserGrowth = userGrowth
+            });
+        }
+
         [HttpGet("marketer/revenue-chart")]
         [Authorize(Roles = "Admin,MarketingStaff")]
         public async Task<IActionResult> GetMarketerRevenueChart([FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate)
@@ -73,9 +131,10 @@ namespace AccArenas.Api.Controllers
             var start = startDate ?? new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
             var end = endDate ?? start.AddMonths(1).AddDays(-1);
 
-            // Fetch completed orders within the date range
+            // Fetch successful orders within the date range
+            var successfulStatuses = new[] { "Completed", "Paid", "Processing", "Delivered" };
             var orders = await _context.Orders
-                .Where(o => o.Status == "Completed" && o.CreatedAt >= start && o.CreatedAt <= end)
+                .Where(o => successfulStatuses.Contains(o.Status) && o.CreatedAt >= start && o.CreatedAt <= end)
                 .Select(o => new { o.CreatedAt, o.TotalAmount })
                 .ToListAsync();
 
