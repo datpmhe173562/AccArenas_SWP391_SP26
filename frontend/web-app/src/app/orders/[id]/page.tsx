@@ -8,10 +8,44 @@ import { formatCurrency } from "@/lib/utils";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useParams } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { inquiryService } from "@/services/inquiryService";
+import Swal from "sweetalert2";
 
 export default function OrderDetailPage() {
   const { id } = useParams();
   const { data: order, isLoading, error } = useOrderDetail(id as string);
+  const [inquiryModalOpen, setInquiryModalOpen] = useState(false);
+  const [inquirySubject, setInquirySubject] = useState("Vấn đề về đơn hàng");
+  const [inquiryMessage, setInquiryMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [inquiries, setInquiries] = useState<any[]>([]);
+  const [loadingInquiries, setLoadingInquiries] = useState(false);
+  const [expandedInquiry, setExpandedInquiry] = useState<string | null>(null);
+  const [replyMessage, setReplyMessage] = useState("");
+  const [replying, setReplying] = useState(false);
+
+  const fetchInquiries = async () => {
+    if (!id) return;
+    setLoadingInquiries(true);
+    try {
+      const data = await inquiryService.getInquiriesByOrder(id as string);
+      setInquiries(data);
+    } catch (err) {
+      console.error("Error fetching inquiries:", err);
+    } finally {
+      setLoadingInquiries(false);
+    }
+  };
+
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+
+  useEffect(() => {
+    if (isAuthenticated && !authLoading) {
+      fetchInquiries();
+    }
+  }, [id, isAuthenticated, authLoading]);
 
   const getStatusBadge = (status: string) => {
     switch (status.toLowerCase()) {
@@ -24,6 +58,73 @@ export default function OrderDetailPage() {
         return <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium">Đã hủy</span>;
       default:
         return <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium">{status}</span>;
+    }
+  };
+
+  const getInquiryStatusBadge = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "open":
+        return <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">Đang xử lý</span>;
+      case "waitingcustomer":
+        return <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-bold">Chờ bạn phản hồi</span>;
+      case "closed":
+        return <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full text-xs font-bold">Đã đóng</span>;
+      default:
+        return <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-full text-xs font-bold">{status}</span>;
+    }
+  };
+
+  const handleCreateInquiry = async () => {
+    if (!inquiryMessage.trim()) {
+      Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Vui lòng nhập nội dung cần hỗ trợ' });
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await inquiryService.createInquiry(id as string, inquirySubject, inquiryMessage);
+      Swal.fire({
+        icon: 'success',
+        title: 'Thành công',
+        text: 'Yêu cầu hỗ trợ đã được gửi. Chúng tôi sẽ phản hồi sớm nhất có thể!',
+        timer: 3000,
+        showConfirmButton: false
+      });
+      setInquiryModalOpen(false);
+      setInquiryMessage("");
+      fetchInquiries();
+    } catch (err: any) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Lỗi',
+        text: err.message || "Không thể gửi yêu cầu hỗ trợ"
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleReply = async (inquiryId: string) => {
+    if (!replyMessage.trim()) return;
+    setReplying(true);
+    try {
+      await inquiryService.replyInquiry(inquiryId, replyMessage);
+      setReplyMessage("");
+      fetchInquiries();
+      Swal.fire({
+        icon: 'success',
+        title: 'Thành công',
+        text: 'Đã gửi phản hồi',
+        timer: 2000,
+        showConfirmButton: false
+      });
+    } catch (err: any) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Lỗi',
+        text: err.message || "Không thể gửi phản hồi"
+      });
+    } finally {
+      setReplying(false);
     }
   };
 
@@ -87,7 +188,7 @@ export default function OrderDetailPage() {
               </div>
 
               {/* Account Information Section (UC-11) */}
-              {order.status.toLowerCase() === 'paid' || order.status.toLowerCase() === 'completed' ? (
+              {(order.status.toLowerCase() === 'paid' || order.status.toLowerCase() === 'completed') && (
                 <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-6">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white">
@@ -107,7 +208,107 @@ export default function OrderDetailPage() {
                     ))}
                   </div>
                 </div>
-              ) : null}
+              )}
+
+              {/* Support History (Inquiry history section) */}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="p-6 border-b border-gray-50 bg-gray-50/50 flex justify-between items-center">
+                  <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+                    <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                    </svg>
+                    Lịch sử hỗ trợ
+                  </h2>
+                  <button 
+                    onClick={() => setInquiryModalOpen(true)}
+                    className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors bg-indigo-50 px-3 py-1.5 rounded-lg"
+                  >
+                    Gửi yêu cầu mới
+                  </button>
+                </div>
+                
+                <div className="divide-y divide-gray-100">
+                  {loadingInquiries ? (
+                    <div className="p-8 text-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+                    </div>
+                  ) : inquiries.length === 0 ? (
+                    <div className="p-8 text-center text-gray-500">
+                      <p className="text-sm">Bạn chưa có yêu cầu hỗ trợ nào cho đơn hàng này.</p>
+                    </div>
+                  ) : (
+                    inquiries.map((inquiry) => (
+                      <div key={inquiry.id} className="group">
+                        <button 
+                          onClick={() => setExpandedInquiry(expandedInquiry === inquiry.id ? null : inquiry.id)}
+                          className="w-full p-6 text-left hover:bg-gray-50 transition-colors flex justify-between items-center"
+                        >
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-gray-900">{inquiry.subject}</span>
+                              {getInquiryStatusBadge(inquiry.status)}
+                            </div>
+                            <span className="text-xs text-gray-400">
+                              Gửi ngày: {format(new Date(inquiry.createdAt), "dd/MM/yyyy HH:mm")}
+                            </span>
+                          </div>
+                          <svg 
+                            className={`w-5 h-5 text-gray-400 transition-transform ${expandedInquiry === inquiry.id ? 'rotate-180' : ''}`} 
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+                        
+                        {expandedInquiry === inquiry.id && (
+                          <div className="px-6 pb-6 bg-gray-50/50">
+                            <div className="bg-white border border-gray-100 rounded-2xl p-4 space-y-4 max-h-[400px] overflow-y-auto mb-4">
+                              {inquiry.messages.map((msg: any) => (
+                                <div 
+                                  key={msg.id} 
+                                  className={`flex flex-col ${msg.senderRole === "Staff" || msg.senderRole === "Sales" ? "items-start" : "items-end"}`}
+                                >
+                                  <div className={`max-w-[85%] p-3 rounded-2xl text-sm ${
+                                    msg.senderRole === "Staff" || msg.senderRole === "Sales"
+                                      ? "bg-indigo-600 text-white rounded-tl-none" 
+                                      : "bg-gray-100 text-gray-800 rounded-tr-none"
+                                  }`}>
+                                    <p className="font-medium whitespace-pre-wrap">{msg.content}</p>
+                                  </div>
+                                  <span className="text-[10px] text-gray-400 mt-1 px-1">
+                                    {msg.senderRole === "Customer" ? "Bạn" : "CSKH"} • {format(new Date(msg.createdAt), "HH:mm dd/MM")}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                            
+                            {inquiry.status.toLowerCase() !== 'closed' && (
+                              <div className="relative group">
+                                <textarea 
+                                  value={replyMessage}
+                                  onChange={(e) => setReplyMessage(e.target.value)}
+                                  placeholder="Nhập nội dung phản hồi..."
+                                  rows={2}
+                                  className="w-full bg-white border-2 border-gray-100 rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none transition-all resize-none"
+                                />
+                                <button 
+                                  onClick={() => handleReply(inquiry.id)}
+                                  disabled={replying || !replyMessage.trim()}
+                                  className="absolute right-2 bottom-2 bg-indigo-600 text-white p-2 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                                >
+                                  <svg className="w-5 h-5 rotate-90" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                                  </svg>
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Right Column: Order Summary */}
@@ -153,12 +354,15 @@ export default function OrderDetailPage() {
                 <h3 className="font-bold text-gray-900 mb-4">Bạn cần hỗ trợ?</h3>
                 <p className="text-sm text-gray-500 mb-6">Nếu có bất kỳ vấn đề gì về đơn hàng, vui lòng liên hệ với bộ phận CSKH của AccArenas.</p>
                 <div className="space-y-3">
-                  <button className="w-full border border-gray-200 text-gray-700 font-semibold py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm">
+                  <button 
+                    onClick={() => setInquiryModalOpen(true)}
+                    className="w-full bg-indigo-50 border border-indigo-100 text-indigo-600 font-bold py-2 rounded-lg hover:bg-indigo-100 transition-colors text-sm"
+                  >
                     Chat với chúng tôi
                   </button>
-                  <button className="w-full border border-gray-200 text-gray-700 font-semibold py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm">
+                  <Link href="/support" className="block w-full text-center border border-gray-200 text-gray-700 font-semibold py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm">
                     Trung tâm hỗ trợ
-                  </button>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -167,6 +371,98 @@ export default function OrderDetailPage() {
       </main>
 
       <Footer />
+
+      {/* Inquiry Modal */}
+      {inquiryModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-900/30 backdrop-blur-md transition-all duration-300">
+          <div className="bg-white/95 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] w-full max-w-lg overflow-hidden border border-white/20 animate-in fade-in zoom-in duration-300">
+            {/* Header with Gradient */}
+            <div className="p-8 bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-700 text-white relative">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+              <div className="absolute bottom-0 left-0 w-24 h-24 bg-purple-400/20 rounded-full -ml-12 -mb-12 blur-2xl"></div>
+              
+              <div className="flex justify-between items-center relative z-10">
+                <div>
+                  <h3 className="text-2xl font-black tracking-tight">Gửi yêu cầu hỗ trợ</h3>
+                  <p className="text-indigo-100 text-sm font-medium mt-1">Chúng tôi luôn sẵn sàng giúp đỡ bạn</p>
+                </div>
+                <button 
+                  onClick={() => setInquiryModalOpen(false)} 
+                  className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all hover:rotate-90"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div className="p-8 space-y-6 bg-white">
+              <div className="space-y-4">
+                <div className="group">
+                  <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 px-1">
+                    Chủ đề hỗ trợ
+                  </label>
+                  <div className="relative">
+                    <select 
+                      value={inquirySubject}
+                      onChange={(e) => setInquirySubject(e.target.value)}
+                      className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-5 py-3 text-slate-700 font-bold focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none transition-all appearance-none cursor-pointer"
+                    >
+                      <option>Vấn đề về đơn hàng</option>
+                      <option>Bảo hành tài khoản</option>
+                      <option>Lỗi tài khoản/mật khẩu</option>
+                      <option>Thông tin nạp thẻ</option>
+                      <option>Khác</option>
+                    </select>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="group">
+                  <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 px-1">
+                    Nội dung chi tiết
+                  </label>
+                  <textarea 
+                    rows={4}
+                    value={inquiryMessage}
+                    onChange={(e) => setInquiryMessage(e.target.value)}
+                    placeholder="Vui lòng mô tả chi tiết vấn đề bạn đang gặp phải..."
+                    className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-5 py-4 text-slate-700 font-medium focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none transition-all resize-none placeholder:text-slate-300"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <button 
+                  onClick={handleCreateInquiry}
+                  disabled={submitting}
+                  className="group w-full relative h-14 bg-indigo-600 rounded-2xl overflow-hidden shadow-[0_10px_30px_-10px_rgba(79,70,229,0.5)] hover:shadow-[0_20px_40px_-10px_rgba(79,70,229,0.5)] transition-all active:scale-[0.98] disabled:opacity-70"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 group-hover:scale-105 transition-transform"></div>
+                  <div className="relative flex items-center justify-center gap-3 text-white font-black text-lg">
+                    {submitting ? (
+                      <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    ) : (
+                      <>
+                        <span>Gửi yêu cầu ngay</span>
+                        <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                        </svg>
+                      </>
+                    )}
+                  </div>
+                </button>
+                <p className="text-center text-xs text-slate-400 mt-4 font-medium italic">
+                  * Chúng tôi cam kết phản hồi trong vòng 24 giờ làm việc
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
