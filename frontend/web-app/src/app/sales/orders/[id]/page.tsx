@@ -50,7 +50,7 @@ export default function SalesOrderDetailPage() {
   }, [orderId]);
 
   const statusOptions = useMemo(
-    () => ["Processing", "Delivered", "Failed", "Completed"],
+    () => ["Paid", "Cancelled", "Completed", "Delivered", "Failed"],
     [],
   );
 
@@ -131,12 +131,6 @@ export default function SalesOrderDetailPage() {
                   {order.status}
                 </p>
               </div>
-              <div className="px-4 py-2 bg-slate-50 rounded-2xl border border-slate-100 text-right">
-                <p className="text-[10px] uppercase font-black text-gray-400 tracking-widest mb-0.5">Phụ trách</p>
-                <p className="text-sm font-bold text-gray-700">
-                  {order.assignedSalesName || "Chưa có"}
-                </p>
-              </div>
             </div>
           </div>
         </div>
@@ -179,67 +173,30 @@ export default function SalesOrderDetailPage() {
                     </div>
                   ))}
                 </div>
-                <div className="mt-8 pt-6 border-t border-dashed border-gray-100 flex items-center justify-between">
-                  <span className="text-gray-400 font-bold uppercase tracking-widest text-xs">Tổng giá trị đơn hàng</span>
-                  <span className="text-3xl font-black text-indigo-600 tracking-tighter">
-                    {order.totalAmount.toLocaleString('vi-VN')} {order.currency}
-                  </span>
+                <div className="mt-8 pt-6 border-t border-dashed border-gray-100 space-y-3">
+                  <div className="flex items-center justify-between text-gray-500 font-medium">
+                    <span className="text-[10px] uppercase font-bold tracking-widest">Tạm tính</span>
+                    <span>{order.items.reduce((acc, item) => acc + (item.price * item.quantity), 0).toLocaleString('vi-VN')} {order.currency}</span>
+                  </div>
+                  {(order.discountAmount || (order.items.reduce((acc, item) => acc + (item.price * item.quantity), 0) - order.totalAmount) > 0) && (
+                    <div className="flex items-center justify-between text-rose-500 font-medium">
+                      <span className="text-[10px] uppercase font-bold tracking-widest flex items-center gap-1">
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5 5a3 3 0 015-2.236A3 3 0 0114.83 6H16a2 2 0 110 4h-5V9a1 1 0 10-2 0v1H4a2 2 0 110-4h1.17C5.06 5.687 5 5.35 5 5zm4 1V5a1 1 0 10-1.115.992l1.115.008zm3-1a1 1 0 11-1 1h1V5z" clipRule="evenodd" /><path d="M9 11H4v5a2 2 0 002 2h4v-7zM11 18h4a2 2 0 002-2v-5h-5v7z" /></svg>
+                        Giảm giá {order.promotionCode ? `(${order.promotionCode})` : ""}
+                      </span>
+                      <span>-{(order.discountAmount || (order.items.reduce((acc, item) => acc + (item.price * item.quantity), 0) - order.totalAmount)).toLocaleString('vi-VN')} {order.currency}</span>
+                    </div>
+                  )}
+                  <div className="pt-3 border-t border-slate-50 flex items-center justify-between">
+                    <span className="text-gray-400 font-bold uppercase tracking-widest text-xs">Tổng giá trị đơn hàng</span>
+                    <span className="text-3xl font-black text-indigo-600 tracking-tighter">
+                      {order.totalAmount.toLocaleString('vi-VN')} {order.currency}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="p-6 border-b border-gray-50 bg-gray-50/50">
-                <h2 className="font-bold text-gray-900 flex items-center gap-2">
-                  <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Tiến trình xử lý
-                </h2>
-              </div>
-              <div className="p-8">
-                {timeline.length === 0 ? (
-                  <div className="text-center py-8 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                    <p className="text-gray-400 font-medium italic">Chưa có lịch sử sự kiện.</p>
-                  </div>
-                ) : (
-                  <div className="relative space-y-8 before:absolute before:inset-0 before:ml-5 before:-translate-x-px before:h-full before:w-0.5 before:bg-gradient-to-b before:from-indigo-600 before:to-indigo-50">
-                    {timeline.map((evt: FulfillmentEventDto) => (
-                      <div key={evt.id} className="relative flex items-center justify-between md:justify-start md:space-x-10">
-                        <div className="flex items-center md:absolute md:left-0 md:translate-x-0">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white ring-4 ring-indigo-50 shadow-sm">
-                            <div className="h-3 w-3 rounded-full bg-indigo-600"></div>
-                          </div>
-                        </div>
-                        <div className="ml-14 flex-grow bg-slate-50 p-6 rounded-2xl border border-slate-100 hover:bg-white hover:shadow-xl transition-all hover:-translate-y-1">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm font-black uppercase tracking-wider text-indigo-600">
-                              {evt.status}
-                            </span>
-                            <span className="text-xs text-gray-400 font-bold bg-white px-3 py-1 rounded-full border border-gray-50 shadow-sm">
-                              {new Date(evt.createdAt).toLocaleString('vi-VN')}
-                            </span>
-                          </div>
-                          {evt.note && (
-                            <p className="text-sm text-gray-700 font-medium leading-relaxed mb-3">
-                              {evt.note}
-                            </p>
-                          )}
-                          <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-500">
-                              {(evt.createdByName || 'S').charAt(0).toUpperCase()}
-                            </div>
-                            <span className="text-[10px] text-gray-400 font-black uppercase tracking-widest">
-                              {evt.createdByName || "System"}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
           </div>
 
           <div className="space-y-8">
@@ -342,26 +299,6 @@ export default function SalesOrderDetailPage() {
                     </p>
                   </div>
 
-                  {order.assignedSalesName ? (
-                    <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100">
-                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Người đang phụ trách</p>
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-black">
-                          {order.assignedSalesName.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="text-sm font-black text-gray-900">{order.assignedSalesName}</p>
-                          <p className="text-[10px] text-indigo-600 font-bold tracking-wider">SALES SPECIALIST</p>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="p-6 bg-indigo-50 rounded-2xl border border-indigo-100">
-                      <p className="text-indigo-800 text-xs font-bold italic">
-                        Đơn hàng này hiện chưa được phân phối cho nhân viên cụ thể hoặc được xử lý bởi hệ thống tự động.
-                      </p>
-                    </div>
-                  )}
 
                   <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100">
                     <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Tóm tắt tiến độ</h4>
@@ -369,10 +306,6 @@ export default function SalesOrderDetailPage() {
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-gray-500">Thanh toán</span>
                         <span className="text-xs font-black text-green-600 uppercase tracking-tighter">{order.status}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-gray-500">Thực hiện</span>
-                        <span className="text-xs font-black text-indigo-600 uppercase tracking-tighter">{order.fulfillmentStatus}</span>
                       </div>
                     </div>
                   </div>

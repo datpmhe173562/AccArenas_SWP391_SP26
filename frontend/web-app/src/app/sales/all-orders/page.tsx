@@ -10,6 +10,8 @@ import { format } from "date-fns";
 export default function SalesAllOrdersPage() {
     const [orders, setOrders] = useState<SalesOrder[]>([]);
     const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [statusFilter, setStatusFilter] = useState("all");
 
     useEffect(() => {
         const fetchOrders = async () => {
@@ -25,12 +27,22 @@ export default function SalesAllOrdersPage() {
         fetchOrders();
     }, []);
 
+    const filteredOrders = orders.filter(order => {
+        const matchesSearch = 
+            order.id.toLowerCase().includes(searchTerm.toLowerCase()) || 
+            (order.userName?.toLowerCase() || "").includes(searchTerm.toLowerCase());
+        const matchesStatus = statusFilter === "all" || order.status.toLowerCase() === statusFilter.toLowerCase();
+        return matchesSearch && matchesStatus;
+    });
+
     const getStatusColor = (status: string) => {
         switch (status.toLowerCase()) {
             case "completed": return "bg-emerald-100 text-emerald-700 border-emerald-200";
-            case "delivered": return "bg-blue-100 text-blue-700 border-blue-200";
-            case "processing": return "bg-amber-100 text-amber-700 border-amber-200";
+            case "processing": 
+            case "pending": return "bg-amber-100 text-amber-700 border-amber-200";
+            case "cancelled":
             case "refunded": return "bg-rose-100 text-rose-700 border-rose-200";
+            case "paid": return "bg-indigo-100 text-indigo-700 border-indigo-200";
             default: return "bg-slate-100 text-slate-700 border-slate-200";
         }
     };
@@ -39,8 +51,35 @@ export default function SalesAllOrdersPage() {
         <SalesLayout>
             <div className="space-y-6">
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8">
-                    <h1 className="text-2xl font-black text-slate-900 mb-2">Lịch sử đơn hàng đã bán</h1>
-                    <p className="text-slate-500 font-medium">Danh sách toàn bộ các đơn hàng đã được giao dịch thành công</p>
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <h1 className="text-2xl font-black text-slate-900 mb-2">Lịch sử đơn hàng đã bán</h1>
+                            <p className="text-slate-500 font-medium text-sm">Danh sách toàn bộ các đơn hàng đã được giao dịch thành công</p>
+                        </div>
+                        <div className="flex flex-col sm:flex-row gap-2">
+                            <div className="relative">
+                                <input 
+                                    type="text" 
+                                    placeholder="Tìm mã đơn, khách hàng..." 
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none w-64"
+                                />
+                                <svg className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            </div>
+                            <select 
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                                className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer"
+                            >
+                                <option value="all">Tất cả trạng thái</option>
+                                <option value="paid">Đã thanh toán (Paid)</option>
+                                <option value="cancelled">Đã hủy (Cancelled)</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
                 {loading ? (
@@ -62,14 +101,14 @@ export default function SalesAllOrdersPage() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
-                                    {orders.length === 0 ? (
+                                    {filteredOrders.length === 0 ? (
                                         <tr>
-                                            <td colSpan={6} className="px-6 py-12 text-center text-slate-400">
-                                                Chưa có dữ liệu đơn hàng
+                                            <td colSpan={6} className="px-6 py-12 text-center text-slate-400 font-medium">
+                                                {searchTerm || statusFilter !== "all" ? "Không tìm thấy kết quả phù hợp" : "Chưa có dữ liệu đơn hàng"}
                                             </td>
                                         </tr>
                                     ) : (
-                                        orders.map((order) => (
+                                        filteredOrders.map((order) => (
                                             <tr key={order.id} className="hover:bg-slate-50 transition-colors">
                                                 <td className="px-6 py-4 font-mono text-sm text-slate-600">
                                                     #{order.id.slice(0, 8)}
@@ -85,7 +124,7 @@ export default function SalesAllOrdersPage() {
                                                 </td>
                                                 <td className="px-6 py-4 text-center">
                                                     <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(order.status)}`}>
-                                                        {order.status}
+                                                        {order.status.toLowerCase() === 'pending' ? 'Cancelled' : order.status}
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4 text-right">
