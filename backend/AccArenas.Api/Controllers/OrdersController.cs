@@ -127,9 +127,29 @@ namespace AccArenas.Api.Controllers
             foreach (var accountId in request.GameAccountIds)
             {
                 var gameAccount = await _unitOfWork.GameAccounts.GetByIdAsync(accountId);
-                if (gameAccount == null || !gameAccount.IsAvailable)
+                if (gameAccount == null)
                 {
-                    return BadRequest(new ApiResponse<string> { Success = false, Message = "Một hoặc nhiều tài khoản không tồn tại hoặc đã được người khác đặt mua." });
+                    return BadRequest(new ApiResponse<string> { Success = false, Message = "Tài khoản không tồn tại." });
+                }
+
+                if (!gameAccount.IsAvailable)
+                {
+                    // Check if this user already has a PENDING order for this specific account
+                    // If they do, we can "overwrite"/cancel the old one to let them try again
+                    var userOrders = await _unitOfWork.Orders.GetOrdersByUserWithItemsAsync(userId);
+                    var existingPendingOrder = userOrders.FirstOrDefault(o => 
+                        o.Status == "Pending" && o.Items.Any(i => i.GameAccountId == accountId));
+
+                    if (existingPendingOrder != null)
+                    {
+                        existingPendingOrder.Status = "Cancelled";
+                        _unitOfWork.Orders.Update(existingPendingOrder);
+                        // The account is already IsAvailable = false, so we just proceed
+                    }
+                    else
+                    {
+                        return BadRequest(new ApiResponse<string> { Success = false, Message = "Một hoặc nhiều tài khoản không tồn tại hoặc đã được người khác đặt mua." });
+                    }
                 }
 
                 totalAmount += gameAccount.Price;
