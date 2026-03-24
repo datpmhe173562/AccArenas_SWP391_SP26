@@ -46,11 +46,11 @@ export default function SalesFeedbacksPage() {
                                 <div key={fb.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition-shadow">
                                     <div className="flex justify-between items-start mb-4">
                                         <div>
-                                            <p className="text-sm font-bold text-slate-900 capitalize">{fb.customerName || "Khách hàng"}</p>
-                                            <p className="text-xs text-slate-500">Mã đơn: #{fb.orderId.slice(0, 8)}</p>
+                                            <p className="text-sm font-bold text-slate-900 capitalize">{fb.userName || fb.customerName || "Khách hàng"}</p>
+                                            <p className="text-xs text-slate-500">Mã đơn: #{fb.orderId?.slice(0, 8) || "N/A"}</p>
                                         </div>
                                         <span className="text-xs text-slate-400">
-                                            {format(new Date(fb.createdAt), "dd/MM/yyyy")}
+                                            {fb.createdAt ? format(new Date(fb.createdAt), "dd/MM/yyyy") : "N/A"}
                                         </span>
                                     </div>
                                     
