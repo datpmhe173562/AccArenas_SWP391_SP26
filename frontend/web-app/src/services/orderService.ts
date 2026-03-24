@@ -7,9 +7,16 @@ export interface CreateOrderRequest {
 }
 
 export const orderService = {
-    async createPayment(request: CreateOrderRequest): Promise<string> {
-        const res = await axiosInstance.post<ApiResponse<string>>('/api/orders/create-payment', request);
-        return res.data.data || ''; // This is the VNPay URL
+    async createPayment(request: CreateOrderRequest): Promise<{ orderId: string, paymentUrl: string }> {
+        const res = await axiosInstance.post<ApiResponse<{ orderId: string, paymentUrl: string }>>('/api/orders/create-payment', request);
+        if (!res.data.success || !res.data.data) {
+            throw new Error(res.data.message || 'Không thể tạo thanh toán');
+        }
+        return res.data.data;
+    },
+
+    async cancelOrder(id: string): Promise<void> {
+        await axiosInstance.post(`/api/orders/cancel/${id}`);
     },
 
     async getMyOrders(): Promise<OrderDto[]> {
