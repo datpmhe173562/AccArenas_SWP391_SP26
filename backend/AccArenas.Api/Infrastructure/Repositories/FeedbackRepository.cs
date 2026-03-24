@@ -40,6 +40,14 @@ namespace AccArenas.Api.Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<Feedback>> GetAllWithUsersAsync()
+        {
+            return await _dbSet
+                .Include(f => f.User)
+                .OrderByDescending(f => f.CreatedAt)
+                .ToListAsync();
+        }
+
         public async Task<double> GetAverageRatingAsync(Guid? gameAccountId = null)
         {
             var query = _dbSet.AsQueryable();

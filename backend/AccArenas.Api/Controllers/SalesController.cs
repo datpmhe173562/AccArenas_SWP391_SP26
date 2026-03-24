@@ -345,7 +345,7 @@ namespace AccArenas.Api.Controllers
                 );
             }
 
-            var feedbacks = await _unitOfWork.Feedbacks.GetBySalesUserAsync(salesUserId.Value);
+            var feedbacks = await _unitOfWork.Feedbacks.GetAllWithUsersAsync();
             var dto = feedbacks.Select(MapFeedbackToDto);
             return Ok(new ApiResponse<IEnumerable<FeedbackDto>> { Success = true, Data = dto });
         }

@@ -10,6 +10,7 @@ namespace AccArenas.Api.Domain.Interfaces
         Task<IEnumerable<Feedback>> GetByUserAsync(Guid userId);
         Task<IEnumerable<Feedback>> GetByOrderAsync(Guid orderId);
         Task<IEnumerable<Feedback>> GetBySalesUserAsync(Guid salesUserId);
+        Task<IEnumerable<Feedback>> GetAllWithUsersAsync();
         Task<double> GetAverageRatingAsync(Guid? gameAccountId = null);
     }
 }

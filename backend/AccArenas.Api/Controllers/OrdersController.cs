@@ -127,9 +127,29 @@ namespace AccArenas.Api.Controllers
             foreach (var accountId in request.GameAccountIds)
             {
                 var gameAccount = await _unitOfWork.GameAccounts.GetByIdAsync(accountId);
-                if (gameAccount == null || !gameAccount.IsAvailable)
+                if (gameAccount == null)
                 {
-                    return BadRequest(new ApiResponse<string> { Success = false, Message = "Một hoặc nhiều tài khoản không tồn tại hoặc đã được người khác đặt mua." });
+                    return BadRequest(new ApiResponse<string> { Success = false, Message = "Tài khoản không tồn tại." });
+                }
+
+                if (!gameAccount.IsAvailable)
+                {
+                    // Check if this user already has a PENDING order for this specific account
+                    // If they do, we can "overwrite"/cancel the old one to let them try again
+                    var userOrders = await _unitOfWork.Orders.GetOrdersByUserWithItemsAsync(userId);
+                    var existingPendingOrder = userOrders.FirstOrDefault(o => 
+                        o.Status == "Pending" && o.Items.Any(i => i.GameAccountId == accountId));
+
+                    if (existingPendingOrder != null)
+                    {
+                        existingPendingOrder.Status = "Cancelled";
+                        _unitOfWork.Orders.Update(existingPendingOrder);
+                        // The account is already IsAvailable = false, so we just proceed
+                    }
+                    else
+                    {
+                        return BadRequest(new ApiResponse<string> { Success = false, Message = "Một hoặc nhiều tài khoản không tồn tại hoặc đã được người khác đặt mua." });
+                    }
                 }
 
                 totalAmount += gameAccount.Price;
@@ -189,11 +209,56 @@ namespace AccArenas.Api.Controllers
 
             var paymentUrl = _vnPayService.CreatePaymentUrl(HttpContext, paymentReq);
 
-            return Ok(new ApiResponse<string>
+            return Ok(new ApiResponse<object>
             {
                 Success = true,
                 Message = "Tạo đơn hàng thành công.",
-                Data = paymentUrl
+                Data = new { OrderId = order.Id, PaymentUrl = paymentUrl }
+            });
+        }
+
+        [HttpPost("cancel/{id}")]
+        [Authorize]
+        public async Task<IActionResult> CancelOrder(Guid id)
+        {
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var userId))
+            {
+                return Unauthorized(new ApiResponse<string> { Success = false, Message = "Người dùng không hợp lệ." });
+            }
+
+            var order = await _unitOfWork.Orders.GetOrderByIdWithItemsAsync(id);
+            if (order == null || order.UserId != userId)
+            {
+                return NotFound(new ApiResponse<string> { Success = false, Message = "Đơn hàng không tồn tại." });
+            }
+
+            if (order.Status != "Pending")
+            {
+                return BadRequest(new ApiResponse<string> { Success = false, Message = "Chỉ có thể hủy đơn hàng đang chờ thanh toán." });
+            }
+
+            // 1. Mark Order as Cancelled
+            order.Status = "Cancelled";
+            _unitOfWork.Orders.Update(order);
+
+            // 2. Mark Game Accounts as Available again
+            foreach (var item in order.Items)
+            {
+                var account = await _unitOfWork.GameAccounts.GetByIdAsync(item.GameAccountId);
+                if (account != null)
+                {
+                    account.IsAvailable = true;
+                    _unitOfWork.GameAccounts.Update(account);
+                }
+            }
+
+            await _unitOfWork.SaveChangesAsync();
+
+            return Ok(new ApiResponse<string>
+            {
+                Success = true,
+                Message = "Đã hủy đơn hàng và giải phóng tài khoản thành công."
             });
         }
     }

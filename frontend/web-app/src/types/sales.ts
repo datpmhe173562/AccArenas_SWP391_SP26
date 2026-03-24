@@ -32,4 +32,6 @@ export type SalesOrder = OrderDto & {
     assignedToSalesId?: string;
     assignedSalesName?: string;
     events?: FulfillmentEventDto[];
+    discountAmount?: number;
+    promotionCode?: string;
 };

@@ -74,7 +74,7 @@ namespace AccArenas.Api.Infrastructure.Data
                 {
                     Name = "MarketingStaff",
                     Description = "Marketing staff managing content and promotions",
-                }
+                },
             };
 
             foreach (var role in roles)
@@ -194,7 +194,7 @@ namespace AccArenas.Api.Infrastructure.Data
                     FullName = "Marketing Staff One",
                     Password = "Test@123",
                     Role = "MarketingStaff",
-                }
+                },
             };
 
             foreach (var userData in testUsers)
@@ -353,7 +353,8 @@ namespace AccArenas.Api.Infrastructure.Data
                         Id = Guid.NewGuid(),
                         Name = "League of Legends",
                         Slug = "league-of-legends",
-                        Image = "https://raw.githubusercontent.com/FPT-SU24-SWP391-G4/AccArenas_Images/main/categories/lol.png",
+                        Image =
+                            "https://raw.githubusercontent.com/FPT-SU24-SWP391-G4/AccArenas_Images/main/categories/lol.png",
                         IsActive = true,
                     },
                     new Category
@@ -361,7 +362,8 @@ namespace AccArenas.Api.Infrastructure.Data
                         Id = Guid.NewGuid(),
                         Name = "Valorant",
                         Slug = "valorant",
-                        Image = "https://raw.githubusercontent.com/FPT-SU24-SWP391-G4/AccArenas_Images/main/categories/valorant.png",
+                        Image =
+                            "https://raw.githubusercontent.com/FPT-SU24-SWP391-G4/AccArenas_Images/main/categories/valorant.png",
                         IsActive = true,
                     },
                     new Category
@@ -369,7 +371,8 @@ namespace AccArenas.Api.Infrastructure.Data
                         Id = Guid.NewGuid(),
                         Name = "PUBG",
                         Slug = "pubg",
-                        Image = "https://raw.githubusercontent.com/FPT-SU24-SWP391-G4/AccArenas_Images/main/categories/pubg.png",
+                        Image =
+                            "https://raw.githubusercontent.com/FPT-SU24-SWP391-G4/AccArenas_Images/main/categories/pubg.png",
                         IsActive = true,
                     },
                     new Category
@@ -377,7 +380,8 @@ namespace AccArenas.Api.Infrastructure.Data
                         Id = Guid.NewGuid(),
                         Name = "Mobile Legends",
                         Slug = "mobile-legends",
-                        Image = "https://raw.githubusercontent.com/FPT-SU24-SWP391-G4/AccArenas_Images/main/categories/mlbb.png",
+                        Image =
+                            "https://raw.githubusercontent.com/FPT-SU24-SWP391-G4/AccArenas_Images/main/categories/mlbb.png",
                         IsActive = true,
                     },
                     new Category
@@ -385,7 +389,8 @@ namespace AccArenas.Api.Infrastructure.Data
                         Id = Guid.NewGuid(),
                         Name = "Liên Quân Mobile",
                         Slug = "lien-quan-mobile",
-                        Image = "https://raw.githubusercontent.com/FPT-SU24-SWP391-G4/AccArenas_Images/main/categories/aov.png",
+                        Image =
+                            "https://raw.githubusercontent.com/FPT-SU24-SWP391-G4/AccArenas_Images/main/categories/aov.png",
                         IsActive = true,
                     },
                     new Category
@@ -393,7 +398,8 @@ namespace AccArenas.Api.Infrastructure.Data
                         Id = Guid.NewGuid(),
                         Name = "FIFA 4",
                         Slug = "fifa-4",
-                        Image = "https://raw.githubusercontent.com/FPT-SU24-SWP391-G4/AccArenas_Images/main/categories/fo4.png",
+                        Image =
+                            "https://raw.githubusercontent.com/FPT-SU24-SWP391-G4/AccArenas_Images/main/categories/fo4.png",
                         IsActive = true,
                     },
                 };
@@ -424,24 +430,26 @@ namespace AccArenas.Api.Infrastructure.Data
                         "valorant" => "VAL",
                         "pubg" => "PUBG",
                         "fifa-4" => "FO4",
-                        _ => "ACC"
+                        _ => "ACC",
                     };
 
                     for (int i = 1; i <= 10; i++)
                     {
-                        gameAccounts.Add(new GameAccount
-                        {
-                            Id = Guid.NewGuid(),
-                            Game = category.Name,
-                            AccountName = $"{prefix}_{category.Name.Replace(" ", "")}_{i:D2}",
-                            Password = $"Pass{prefix}@{i}!",
-                            Rank = i > 8 ? "Cao Thủ" : "Kim Cương",
-                            Price = 500000 + (i * 100000), // Prices between 600K and 1.5M
-                            Currency = "VND",
-                            IsAvailable = i < 10, // 9 available, 1 sold per category
-                            CategoryId = category.Id,
-                            CreatedAt = DateTime.UtcNow,
-                        });
+                        gameAccounts.Add(
+                            new GameAccount
+                            {
+                                Id = Guid.NewGuid(),
+                                Game = category.Name,
+                                AccountName = $"{prefix}_{category.Name.Replace(" ", "")}_{i:D2}",
+                                Password = $"Pass{prefix}@{i}!",
+                                Rank = i > 8 ? "Cao Thủ" : "Kim Cương",
+                                Price = 500000 + (i * 100000), // Prices between 600K and 1.5M
+                                Currency = "VND",
+                                IsAvailable = i < 10, // 9 available, 1 sold per category
+                                CategoryId = category.Id,
+                                CreatedAt = DateTime.UtcNow,
+                            }
+                        );
                     }
                 }
 

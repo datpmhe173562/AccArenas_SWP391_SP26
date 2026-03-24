@@ -5,6 +5,8 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import { orderService } from "@/services/orderService";
+import { OrderDto } from "@/types/generated-api";
 
 function PaymentResultContent() {
     const searchParams = useSearchParams();
@@ -13,6 +15,20 @@ function PaymentResultContent() {
     const success = searchParams.get("success") === "true";
     const orderId = searchParams.get("orderId");
     const vnpResponseCode = searchParams.get("vnp_ResponseCode");
+
+    const [order, setOrder] = useState<OrderDto | null>(null);
+    const [loadingOrder, setLoadingOrder] = useState(true);
+
+    useEffect(() => {
+        if (orderId) {
+            orderService.getOrderById(orderId)
+                .then(setOrder)
+                .catch(err => console.error("Error fetching order:", err))
+                .finally(() => setLoadingOrder(false));
+        } else {
+            setLoadingOrder(false);
+        }
+    }, [orderId]);
 
     const getErrorMessage = (code: string | null) => {
         switch (code) {
@@ -86,8 +102,11 @@ function PaymentResultContent() {
                                 </>
                             ) : (
                                 <>
-                                    <Link href="/game-accounts" className="px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition">
-                                        Thử mua lại
+                                     <Link 
+                                        href={order?.items?.[0]?.gameAccountId ? `/checkout?id=${order.items[0].gameAccountId}` : "/game-accounts"} 
+                                        className="px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition"
+                                    >
+                                        Thử thanh toán lại
                                     </Link>
                                     <Link href="/" className="px-6 py-3 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition">
                                         Về trang chủ
