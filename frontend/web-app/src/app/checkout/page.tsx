@@ -20,6 +20,7 @@ function CheckoutContent() {
     const { data: account, isLoading: accountLoading } = useGameAccount(id || "", !!id);
     
     const [isProcessing, setIsProcessing] = useState(false);
+    const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
     const [voucherCode, setVoucherCode] = useState("");
     const [appliedVoucher, setAppliedVoucher] = useState<{ code: string, discountPercent: number } | null>(null);
     const [isValidating, setIsValidating] = useState(false);
@@ -35,6 +36,48 @@ function CheckoutContent() {
             }
         }
     }, [isAuthenticated, authLoading, user, router, id]);
+
+    // Handle back button / leave page alert
+    useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            if (isProcessing) {
+                e.preventDefault();
+                e.returnValue = "Bạn có muốn hủy giao dịch không?";
+                return e.returnValue;
+            }
+        };
+
+        const handlePopState = async (e: PopStateEvent) => {
+            if (isProcessing) {
+                if (window.confirm("Bạn có muốn hủy giao dịch không?")) {
+                    if (activeOrderId) {
+                        try {
+                            await orderService.cancelOrder(activeOrderId);
+                            setIsProcessing(false);
+                        } catch (err) {
+                            console.error("Lỗi khi hủy đơn hàng:", err);
+                        }
+                    }
+                    // Allow navigation
+                } else {
+                    // Push state back to prevent navigation
+                    window.history.pushState(null, "", window.location.href);
+                }
+            }
+        };
+
+        if (isProcessing) {
+            window.history.pushState(null, "", window.location.href);
+            window.addEventListener("popstate", handlePopState);
+        }
+
+        window.addEventListener("beforeunload", handleBeforeUnload);
+        
+        return () => {
+            window.removeEventListener("beforeunload", handleBeforeUnload);
+            window.removeEventListener("popstate", handlePopState);
+        };
+    }, [isProcessing, activeOrderId]);
 
     const handleApplyVoucher = async () => {
         if (!voucherCode.trim()) return;
@@ -85,10 +128,11 @@ function CheckoutContent() {
         if (!id) return;
         setIsProcessing(true);
         try {
-            const paymentUrl = await orderService.createPayment({ 
+            const { orderId, paymentUrl } = await orderService.createPayment({ 
                 gameAccountIds: [id],
                 promotionCode: appliedVoucher?.code
             });
+            setActiveOrderId(orderId);
             window.location.href = paymentUrl;
         } catch (error: any) {
             showError(error.message || "Có lỗi xảy ra khi tạo thanh toán");
