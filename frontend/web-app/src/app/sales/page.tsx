@@ -92,7 +92,10 @@ export default function SalesDashboardPage() {
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart 
                       layout="vertical" 
-                      data={charts?.statusDistribution || []}
+                      data={(charts?.statusDistribution || []).map((item: any) => ({
+                        ...item,
+                        status: item.status.toLowerCase() === "pending" ? "Cancelled" : item.status
+                      }))}
                       margin={{ left: 40, right: 20 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#F3F4F6" />
