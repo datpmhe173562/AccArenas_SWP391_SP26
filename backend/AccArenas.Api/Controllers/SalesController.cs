@@ -429,6 +429,43 @@ namespace AccArenas.Api.Controllers
             );
         }
 
+        [HttpPatch("inquiries/{id}/status")]
+        public async Task<IActionResult> UpdateInquiryStatus(
+            Guid id,
+            [FromBody] UpdateInquiryStatusRequest request
+        )
+        {
+            var salesUserId = GetUserId();
+            if (salesUserId == null)
+            {
+                return Unauthorized(
+                    new ApiResponse<string> { Success = false, Message = "User not found" }
+                );
+            }
+
+            if (request == null || string.IsNullOrWhiteSpace(request.Status))
+            {
+                return BadRequest(
+                    new ApiResponse<string> { Success = false, Message = "Status is required" }
+                );
+            }
+
+            var inquiry = await _unitOfWork.Inquiries.GetWithMessagesAsync(id);
+            if (inquiry == null)
+            {
+                return NotFound(new ApiResponse<string> { Success = false, Message = "Inquiry not found" });
+            }
+
+            inquiry.Status = request.Status;
+            _unitOfWork.Inquiries.Update(inquiry);
+            await _unitOfWork.SaveChangesAsync();
+
+            var reloaded = await _unitOfWork.Inquiries.GetWithMessagesAsync(id);
+            return Ok(
+                new ApiResponse<InquiryDto> { Success = true, Data = MapInquiryToDto(reloaded!), Message = "Cập nhật trạng thái thành công" }
+            );
+        }
+
         private OrderDto MapOrderToDto(Order order)
         {
             return new OrderDto

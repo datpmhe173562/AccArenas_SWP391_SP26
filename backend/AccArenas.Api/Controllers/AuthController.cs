@@ -15,7 +15,6 @@ namespace AccArenas.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    
     public class AuthController : ControllerBase
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
@@ -326,8 +325,11 @@ namespace AccArenas.Api.Controllers
             if (!result.Succeeded)
             {
                 var errors = result.Errors.ToDictionary(
-                    e => e.Code, 
-                    e => e.Code == "PasswordMismatch" ? "Mật khẩu hiện tại không đúng" : e.Description
+                    e => e.Code,
+                    e =>
+                        e.Code == "PasswordMismatch"
+                            ? "Mật khẩu hiện tại không đúng"
+                            : e.Description
                 );
                 throw ExceptionMessages.BadRequest(
                     ExceptionMessages.PASSWORD_CHANGE_FAILED,
@@ -621,6 +623,5 @@ namespace AccArenas.Api.Controllers
 
             return SignIn(principal, OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
         }
-
     }
 }

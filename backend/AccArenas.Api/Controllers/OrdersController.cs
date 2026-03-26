@@ -20,7 +20,11 @@ namespace AccArenas.Api.Controllers
         private readonly IVnPayService _vnPayService;
         private readonly IConfiguration _configuration;
 
-        public OrdersController(IUnitOfWork unitOfWork, IVnPayService vnPayService, IConfiguration configuration)
+        public OrdersController(
+            IUnitOfWork unitOfWork,
+            IVnPayService vnPayService,
+            IConfiguration configuration
+        )
         {
             _unitOfWork = unitOfWork;
             _vnPayService = vnPayService;
@@ -34,7 +38,13 @@ namespace AccArenas.Api.Controllers
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var userId))
             {
-                return Unauthorized(new ApiResponse<string> { Success = false, Message = "Người dùng không hợp lệ." });
+                return Unauthorized(
+                    new ApiResponse<string>
+                    {
+                        Success = false,
+                        Message = "Người dùng không hợp lệ.",
+                    }
+                );
             }
 
             var orders = await _unitOfWork.Orders.GetOrdersByUserWithItemsAsync(userId);
@@ -46,21 +56,19 @@ namespace AccArenas.Api.Controllers
                 Status = o.Status,
                 TotalAmount = o.TotalAmount,
                 Currency = o.Currency,
-                Items = o.Items.Select(oi => new OrderItemDto
-                {
-                    Id = oi.Id,
-                    GameAccountId = oi.GameAccountId,
-                    GameAccountName = oi.GameAccount?.AccountName ?? "Tài khoản game",
-                    Price = oi.Price,
-                    Quantity = oi.Quantity
-                }).ToList()
+                Items = o
+                    .Items.Select(oi => new OrderItemDto
+                    {
+                        Id = oi.Id,
+                        GameAccountId = oi.GameAccountId,
+                        GameAccountName = oi.GameAccount?.AccountName ?? "Tài khoản game",
+                        Price = oi.Price,
+                        Quantity = oi.Quantity,
+                    })
+                    .ToList(),
             });
 
-            return Ok(new ApiResponse<IEnumerable<OrderDto>>
-            {
-                Success = true,
-                Data = orderDtos
-            });
+            return Ok(new ApiResponse<IEnumerable<OrderDto>> { Success = true, Data = orderDtos });
         }
 
         [HttpGet("{id}")]
@@ -70,13 +78,21 @@ namespace AccArenas.Api.Controllers
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var userId))
             {
-                return Unauthorized(new ApiResponse<string> { Success = false, Message = "Người dùng không hợp lệ." });
+                return Unauthorized(
+                    new ApiResponse<string>
+                    {
+                        Success = false,
+                        Message = "Người dùng không hợp lệ.",
+                    }
+                );
             }
 
             var order = await _unitOfWork.Orders.GetOrderByIdWithItemsAsync(id);
             if (order == null || order.UserId != userId)
             {
-                return NotFound(new ApiResponse<string> { Success = false, Message = "Đơn hàng không tồn tại." });
+                return NotFound(
+                    new ApiResponse<string> { Success = false, Message = "Đơn hàng không tồn tại." }
+                );
             }
 
             var orderDto = new OrderDto
@@ -87,21 +103,19 @@ namespace AccArenas.Api.Controllers
                 Status = order.Status,
                 TotalAmount = order.TotalAmount,
                 Currency = order.Currency,
-                Items = order.Items.Select(oi => new OrderItemDto
-                {
-                    Id = oi.Id,
-                    GameAccountId = oi.GameAccountId,
-                    GameAccountName = oi.GameAccount?.AccountName ?? "Tài khoản game",
-                    Price = oi.Price,
-                    Quantity = oi.Quantity
-                }).ToList()
+                Items = order
+                    .Items.Select(oi => new OrderItemDto
+                    {
+                        Id = oi.Id,
+                        GameAccountId = oi.GameAccountId,
+                        GameAccountName = oi.GameAccount?.AccountName ?? "Tài khoản game",
+                        Price = oi.Price,
+                        Quantity = oi.Quantity,
+                    })
+                    .ToList(),
             };
 
-            return Ok(new ApiResponse<OrderDto>
-            {
-                Success = true,
-                Data = orderDto
-            });
+            return Ok(new ApiResponse<OrderDto> { Success = true, Data = orderDto });
         }
 
         [HttpPost("create-payment")]
@@ -110,13 +124,21 @@ namespace AccArenas.Api.Controllers
         {
             if (request.GameAccountIds == null || !request.GameAccountIds.Any())
             {
-                return BadRequest(new ApiResponse<string> { Success = false, Message = "Dữ liệu không hợp lệ." });
+                return BadRequest(
+                    new ApiResponse<string> { Success = false, Message = "Dữ liệu không hợp lệ." }
+                );
             }
 
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var userId))
             {
-                return Unauthorized(new ApiResponse<string> { Success = false, Message = "Người dùng không hợp lệ." });
+                return Unauthorized(
+                    new ApiResponse<string>
+                    {
+                        Success = false,
+                        Message = "Người dùng không hợp lệ.",
+                    }
+                );
             }
 
             // 1. Validate Game Accounts
@@ -129,7 +151,13 @@ namespace AccArenas.Api.Controllers
                 var gameAccount = await _unitOfWork.GameAccounts.GetByIdAsync(accountId);
                 if (gameAccount == null)
                 {
-                    return BadRequest(new ApiResponse<string> { Success = false, Message = "Tài khoản không tồn tại." });
+                    return BadRequest(
+                        new ApiResponse<string>
+                        {
+                            Success = false,
+                            Message = "Tài khoản không tồn tại.",
+                        }
+                    );
                 }
 
                 if (!gameAccount.IsAvailable)
@@ -137,8 +165,9 @@ namespace AccArenas.Api.Controllers
                     // Check if this user already has a PENDING order for this specific account
                     // If they do, we can "overwrite"/cancel the old one to let them try again
                     var userOrders = await _unitOfWork.Orders.GetOrdersByUserWithItemsAsync(userId);
-                    var existingPendingOrder = userOrders.FirstOrDefault(o => 
-                        o.Status == "Pending" && o.Items.Any(i => i.GameAccountId == accountId));
+                    var existingPendingOrder = userOrders.FirstOrDefault(o =>
+                        o.Status == "Pending" && o.Items.Any(i => i.GameAccountId == accountId)
+                    );
 
                     if (existingPendingOrder != null)
                     {
@@ -148,24 +177,33 @@ namespace AccArenas.Api.Controllers
                     }
                     else
                     {
-                        return BadRequest(new ApiResponse<string> { Success = false, Message = "Một hoặc nhiều tài khoản không tồn tại hoặc đã được người khác đặt mua." });
+                        return BadRequest(
+                            new ApiResponse<string>
+                            {
+                                Success = false,
+                                Message =
+                                    "Một hoặc nhiều tài khoản không tồn tại hoặc đã được người khác đặt mua.",
+                            }
+                        );
                     }
                 }
 
                 totalAmount += gameAccount.Price;
                 gameAccounts.Add(gameAccount);
-                
+
                 // Immediately mark as unavailable to "lock" it
                 gameAccount.IsAvailable = false;
                 _unitOfWork.GameAccounts.Update(gameAccount);
 
-                orderItems.Add(new OrderItem
-                {
-                    Id = Guid.NewGuid(),
-                    GameAccountId = accountId,
-                    Price = gameAccount.Price,
-                    Quantity = 1
-                });
+                orderItems.Add(
+                    new OrderItem
+                    {
+                        Id = Guid.NewGuid(),
+                        GameAccountId = accountId,
+                        Price = gameAccount.Price,
+                        Quantity = 1,
+                    }
+                );
             }
 
             // Apply Promotion if provided
@@ -175,7 +213,12 @@ namespace AccArenas.Api.Controllers
                 var promotion = await _unitOfWork.Promotions.GetByCodeAsync(request.PromotionCode);
                 var now = DateTime.UtcNow;
 
-                if (promotion != null && promotion.IsActive && now >= promotion.StartDate && now <= promotion.EndDate)
+                if (
+                    promotion != null
+                    && promotion.IsActive
+                    && now >= promotion.StartDate
+                    && now <= promotion.EndDate
+                )
                 {
                     discountAmount = totalAmount * (promotion.DiscountPercent / 100);
                     totalAmount -= discountAmount;
@@ -191,7 +234,7 @@ namespace AccArenas.Api.Controllers
                 Status = "Pending",
                 TotalAmount = totalAmount,
                 Currency = "VND",
-                Items = orderItems
+                Items = orderItems,
             };
 
             await _unitOfWork.Orders.AddAsync(order);
@@ -204,17 +247,19 @@ namespace AccArenas.Api.Controllers
                 OrderId = order.Id.ToString(),
                 OrderDescription = "Thanh toán giao dịch AccArenas",
                 Name = "AccArenas Customer",
-                OrderType = "vnpay"
+                OrderType = "vnpay",
             };
 
             var paymentUrl = _vnPayService.CreatePaymentUrl(HttpContext, paymentReq);
 
-            return Ok(new ApiResponse<object>
-            {
-                Success = true,
-                Message = "Tạo đơn hàng thành công.",
-                Data = new { OrderId = order.Id, PaymentUrl = paymentUrl }
-            });
+            return Ok(
+                new ApiResponse<object>
+                {
+                    Success = true,
+                    Message = "Tạo đơn hàng thành công.",
+                    Data = new { OrderId = order.Id, PaymentUrl = paymentUrl },
+                }
+            );
         }
 
         [HttpPost("cancel/{id}")]
@@ -224,18 +269,32 @@ namespace AccArenas.Api.Controllers
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var userId))
             {
-                return Unauthorized(new ApiResponse<string> { Success = false, Message = "Người dùng không hợp lệ." });
+                return Unauthorized(
+                    new ApiResponse<string>
+                    {
+                        Success = false,
+                        Message = "Người dùng không hợp lệ.",
+                    }
+                );
             }
 
             var order = await _unitOfWork.Orders.GetOrderByIdWithItemsAsync(id);
             if (order == null || order.UserId != userId)
             {
-                return NotFound(new ApiResponse<string> { Success = false, Message = "Đơn hàng không tồn tại." });
+                return NotFound(
+                    new ApiResponse<string> { Success = false, Message = "Đơn hàng không tồn tại." }
+                );
             }
 
             if (order.Status != "Pending")
             {
-                return BadRequest(new ApiResponse<string> { Success = false, Message = "Chỉ có thể hủy đơn hàng đang chờ thanh toán." });
+                return BadRequest(
+                    new ApiResponse<string>
+                    {
+                        Success = false,
+                        Message = "Chỉ có thể hủy đơn hàng đang chờ thanh toán.",
+                    }
+                );
             }
 
             // 1. Mark Order as Cancelled
@@ -255,11 +314,13 @@ namespace AccArenas.Api.Controllers
 
             await _unitOfWork.SaveChangesAsync();
 
-            return Ok(new ApiResponse<string>
-            {
-                Success = true,
-                Message = "Đã hủy đơn hàng và giải phóng tài khoản thành công."
-            });
+            return Ok(
+                new ApiResponse<string>
+                {
+                    Success = true,
+                    Message = "Đã hủy đơn hàng và giải phóng tài khoản thành công.",
+                }
+            );
         }
     }
 }

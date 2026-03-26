@@ -338,6 +338,19 @@ namespace AccArenas.Api.Infrastructure.Data
                     await userManager.AddToRoleAsync(usernameOnlyUser, "Customer");
                 }
             }
+
+            // --- SALES: Close Customer Support Ticket after Reply (for test/demo) ---
+            // To simulate the full flow: after a Sales user replies to a support ticket, mark the ticket as closed.
+            // This is a placeholder for demo/test data. In production, this logic should be handled in the support ticket service/controller.
+            // Example (pseudo):
+            // var supportTicket = context.SupportTickets.FirstOrDefault(t => t.Status == "Open");
+            // if (supportTicket != null)
+            // {
+            //     supportTicket.Status = "Resolved";
+            //     supportTicket.ResolvedAt = DateTime.UtcNow;
+            //     context.SupportTickets.Update(supportTicket);
+            //     await context.SaveChangesAsync();
+            // }
         }
 
         private static async Task SeedCategoriesAsync(ApplicationDbContext context, ILogger logger)

@@ -74,4 +74,9 @@ namespace AccArenas.Api.Application.DTOs
     {
         public string Message { get; set; } = string.Empty;
     }
+
+    public class UpdateInquiryStatusRequest
+    {
+        public string Status { get; set; } = string.Empty;
+    }
 }
