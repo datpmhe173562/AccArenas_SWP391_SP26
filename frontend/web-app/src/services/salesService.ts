@@ -66,6 +66,14 @@ export const salesService = {
         return res.data.data;
     },
 
+    async updateInquiryStatus(id: string, status: string): Promise<InquiryDto> {
+        const res = await axiosInstance.patch<ApiResponse<InquiryDto>>(`/api/sales/inquiries/${id}/status`, { status });
+        if (!res.data.success || !res.data.data) {
+            throw new Error(res.data.message || "Không thể cập nhật trạng thái");
+        }
+        return res.data.data;
+    },
+
     async getAllOrders(): Promise<SalesOrder[]> {
         const res = await axiosInstance.get<ApiResponse<SalesOrder[]>>("/api/sales/all-orders");
         return res.data.data || [];

@@ -66,7 +66,7 @@ export default function SalesDashboardPage() {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
           </div>
         ) : (
-          <>
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6">
               {cards.map((c) => (
                 <div key={c.label} className="bg-white rounded-[1.5rem] shadow-sm border border-gray-100 p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
@@ -83,91 +83,141 @@ export default function SalesDashboardPage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-              {/* Status Performance (Horizontal Bar) */}
-              <div className="lg:col-span-5 bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8">
+              {/* Product Stock Distribution (Pie Chart) - NEW */}
+              <div className="lg:col-span-4 bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8">
                 <div className="flex items-center justify-between mb-8">
-                  <h2 className="text-xl font-black text-gray-900 tracking-tight">Phân bổ trạng thái</h2>
+                  <h2 className="text-xl font-black text-gray-900 tracking-tight">Tài khoản & Tồn kho</h2>
+                </div>
+                <div className="h-[320px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={[
+                          { name: 'Chưa bán', value: stats?.totalAvailableAccounts || 0 },
+                          { name: 'Đã bán', value: stats?.totalSoldAccounts || 0 }
+                        ]}
+                        innerRadius={60}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        <Cell fill="#10b981" />
+                        <Cell fill="#4f46e5" />
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}
+                      />
+                      <Legend verticalAlign="bottom" height={36} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Status Performance (Horizontal Bar) */}
+              <div className="lg:col-span-8 bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8">
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="text-xl font-black text-gray-900 tracking-tight">Trạng thái đơn hàng (Orders)</h2>
                 </div>
                 <div className="h-[320px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart 
                       layout="vertical" 
-                      data={(charts?.statusDistribution || []).map((item: any) => ({
-                        ...item,
-                        status: item.status.toLowerCase() === "pending" ? "Cancelled" : item.status
-                      }))}
-                      margin={{ left: 40, right: 20 }}
+                      data={(charts?.statusDistribution || []).map((item: any) => {
+                        const statusMapping: any = {
+                          "Pending": "Chờ thanh toán",
+                          "Paid": "Đã thanh toán",
+                          "Processing": "Đang xử lý",
+                          "Delivered": "Đã giao",
+                          "Failed": "Thất bại/Huỷ",
+                          "Completed": "Hoàn tất"
+                        };
+                        return {
+                          ...item,
+                          statusLabel: statusMapping[item.status] || item.status
+                        };
+                      })}
+                      margin={{ left: 50, right: 30 }}
                     >
-                      <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#F3F4F6" />
+                      <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#E5E7EB" />
                       <XAxis type="number" hide />
                       <YAxis 
-                        dataKey="status" 
+                        dataKey="statusLabel" 
                         type="category" 
                         axisLine={false} 
                         tickLine={false} 
-                        tick={{ fill: '#4B5563', fontSize: 12, fontWeight: 700 }}
+                        tick={{ fill: '#374151', fontSize: 13, fontWeight: 700 }}
+                        width={120}
                       />
                       <Tooltip 
-                        cursor={{ fill: '#F9FAFB' }}
+                        cursor={{ fill: '#F3F4F6' }}
                         contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}
+                        formatter={(value) => [`${value} đơn`, 'Số lượng']}
                       />
-                      <Bar dataKey="count" radius={[0, 6, 6, 0]} barSize={24}>
-                        {(charts?.statusDistribution || []).map((entry: any, index: number) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
+                      <Bar dataKey="count" radius={[0, 8, 8, 0]} barSize={28}>
+                        {(charts?.statusDistribution || []).map((entry: any, index: number) => {
+                          const statusColors: any = {
+                            "Pending": "#f59e0b",
+                            "Paid": "#10b981",
+                            "Processing": "#0ea5e9",
+                            "Delivered": "#3b82f6",
+                            "Failed": "#ef4444",
+                            "Completed": "#4f46e5"
+                          };
+                          return <Cell key={`cell-${index}`} fill={statusColors[entry.status] || COLORS[index % COLORS.length]} />;
+                        })}
                       </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
               </div>
+            </div>
 
-              {/* Revenue Trend (Area Chart) */}
-              <div className="lg:col-span-7 bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8">
-                <div className="flex items-center justify-between mb-8">
-                  <h2 className="text-xl font-black text-gray-900 tracking-tight">Xu hướng doanh thu (7 ngày qua)</h2>
-                </div>
-                <div className="h-[320px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={charts?.weeklyPerformance || []}>
-                      <defs>
-                        <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
-                      <XAxis 
-                        dataKey="date" 
-                        tickFormatter={formatDay}
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fill: '#9CA3AF', fontSize: 11, fontWeight: 700 }}
-                      />
-                      <YAxis 
-                        axisLine={false} 
-                        tickLine={false} 
-                        tick={{ fill: '#9CA3AF', fontSize: 11, fontWeight: 700 }}
-                        tickFormatter={(val) => `${(val / 1000).toFixed(0)}k`}
-                      />
-                      <Tooltip 
-                        contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}
-                        formatter={(val: any) => [new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val), 'Doanh thu']}
-                      />
-                      <Area 
-                        type="monotone" 
-                        dataKey="revenue" 
-                        stroke="#4f46e5" 
-                        strokeWidth={4}
-                        fillOpacity={1} 
-                        fill="url(#colorRev)" 
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
+            {/* Revenue Trend (Area Chart) */}
+            <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-xl font-black text-gray-900 tracking-tight">Xu hướng doanh thu (7 ngày qua)</h2>
+              </div>
+              <div className="h-[320px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={charts?.weeklyPerformance || []}>
+                    <defs>
+                      <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
+                    <XAxis 
+                      dataKey="date" 
+                      tickFormatter={formatDay}
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: '#9CA3AF', fontSize: 11, fontWeight: 700 }}
+                    />
+                    <YAxis 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{ fill: '#9CA3AF', fontSize: 11, fontWeight: 700 }}
+                      tickFormatter={(val) => `${(val / 1000).toLocaleString('vi-VN')}k`}
+                    />
+                    <Tooltip 
+                      contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}
+                      formatter={(val: any) => [new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val), 'Doanh thu']}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="revenue" 
+                      stroke="#4f46e5" 
+                      strokeWidth={4}
+                      fillOpacity={1} 
+                      fill="url(#colorRev)" 
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
               </div>
             </div>
-          </>
-        )}
+          </div>
+        ) as any}
       </div>
     </SalesLayout>
   );
