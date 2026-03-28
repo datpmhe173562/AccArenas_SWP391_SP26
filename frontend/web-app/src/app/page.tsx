@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import HomeSlider from "@/components/sliders/HomeSlider";
 import HomeBanner from "@/components/banners/HomeBanner";
 import HomeBlog from "@/components/blogs/HomeBlog";
+import FavoriteButton from "@/components/ui/FavoriteButton";
 
 export default function Home() {
   const router = useRouter();
@@ -140,7 +141,12 @@ export default function Home() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                 {accountsResult?.items?.map((account: any) => (
                   <Link href={`/game-accounts/${account.id}`} key={account.id} className="group block">
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 relative">
+                       {/* Favorite Button */}
+                       <div className="absolute top-2 left-2 z-10">
+                           <FavoriteButton gameAccountId={account.id} className="bg-white/90 shadow-sm backdrop-blur-md hover:scale-105" />
+                       </div>
+                       
                        <div className="relative aspect-[4/3] bg-gray-200 overflow-hidden">
                           <img
                               src={account.images?.[0] || 'https://hoanghamobile.com/tin-tuc/wp-content/uploads/2024/06/game-wallpaper-4k-31.jpg'}

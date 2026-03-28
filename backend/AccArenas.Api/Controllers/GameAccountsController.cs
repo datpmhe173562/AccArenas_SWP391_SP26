@@ -18,11 +18,13 @@ namespace AccArenas.Api.Controllers
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
+        private readonly IAuditLogService _auditLogService;
 
-        public GameAccountsController(IUnitOfWork unitOfWork, IMapper mapper)
+        public GameAccountsController(IUnitOfWork unitOfWork, IMapper mapper, IAuditLogService auditLogService)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+            _auditLogService = auditLogService;
         }
 
         [HttpGet]
@@ -146,6 +148,9 @@ namespace AccArenas.Api.Controllers
                 // Commit transaction
                 await _unitOfWork.CommitTransactionAsync();
 
+                var adminId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+                await _auditLogService.LogActionAsync(adminId, "Create", "GameAccount", gameAccount.Id.ToString(), $"Created game account {gameAccount.AccountName}");
+
                 var dto = _mapper.Map<GameAccountDto>(gameAccount);
                 return CreatedAtAction(
                     nameof(GetGameAccount),
@@ -193,6 +198,9 @@ namespace AccArenas.Api.Controllers
                 _unitOfWork.GameAccounts.Update(existingAccount);
                 await _unitOfWork.CommitTransactionAsync();
 
+                var adminId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+                await _auditLogService.LogActionAsync(adminId, "Update", "GameAccount", existingAccount.Id.ToString(), $"Updated game account {existingAccount.AccountName}");
+
                 return NoContent();
             }
             catch (Exception)
@@ -218,6 +226,9 @@ namespace AccArenas.Api.Controllers
 
                 _unitOfWork.GameAccounts.Delete(account);
                 await _unitOfWork.CommitTransactionAsync();
+
+                var adminId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+                await _auditLogService.LogActionAsync(adminId, "Delete", "GameAccount", account.Id.ToString(), $"Deleted game account {account.AccountName}");
 
                 return NoContent();
             }

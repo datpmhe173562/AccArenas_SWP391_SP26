@@ -78,6 +78,12 @@ builder.Services.AddScoped<IVnPayService, VnPayService>();
 // Mapping Service
 builder.Services.AddScoped<IMappingService, MappingService>();
 
+// Audit Log Service
+builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+
+// Favorite Service
+builder.Services.AddScoped<IFavoriteService, FavoriteService>();
+
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(Program));
 

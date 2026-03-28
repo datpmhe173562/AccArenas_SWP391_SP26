@@ -18,16 +18,19 @@ namespace AccArenas.Api.Controllers
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private readonly ILogger<PromotionsController> _logger;
+        private readonly IAuditLogService _auditLogService;
 
         public PromotionsController(
             IUnitOfWork unitOfWork,
             IMapper mapper,
-            ILogger<PromotionsController> logger
+            ILogger<PromotionsController> logger,
+            IAuditLogService auditLogService
         )
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _logger = logger;
+            _auditLogService = auditLogService;
         }
 
         /// <summary>
@@ -217,6 +220,9 @@ namespace AccArenas.Api.Controllers
                     promotion.Code
                 );
 
+                var adminId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+                await _auditLogService.LogActionAsync(adminId, "Create", "Promotion", promotion.Id.ToString(), $"Created promotion {promotion.Code}");
+
                 return CreatedAtAction(
                     nameof(GetPromotion),
                     new { id = promotion.Id },
@@ -278,6 +284,9 @@ namespace AccArenas.Api.Controllers
 
                 _logger.LogInformation("Đã cập nhật khuyến mãi {PromotionId}", id);
 
+                var adminId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+                await _auditLogService.LogActionAsync(adminId, "Update", "Promotion", existingPromotion.Id.ToString(), $"Updated promotion {existingPromotion.Code}");
+
                 return Ok(promotionDto);
             }
             catch (Exception ex)
@@ -306,6 +315,9 @@ namespace AccArenas.Api.Controllers
                 await _unitOfWork.SaveChangesAsync();
 
                 _logger.LogInformation("Đã xóa khuyến mãi {PromotionId}", id);
+
+                var adminId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+                await _auditLogService.LogActionAsync(adminId, "Delete", "Promotion", promotion.Id.ToString(), $"Deleted promotion {promotion.Code}");
 
                 return Ok(new { message = "Xóa khuyến mãi thành công" });
             }
@@ -342,6 +354,9 @@ namespace AccArenas.Api.Controllers
                     id,
                     promotion.IsActive ? "hoạt động" : "không hoạt động"
                 );
+
+                var adminId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+                await _auditLogService.LogActionAsync(adminId, "ToggleStatus", "Promotion", promotion.Id.ToString(), $"Toggled promotion {promotion.Code} to {promotion.IsActive}");
 
                 return Ok(promotionDto);
             }

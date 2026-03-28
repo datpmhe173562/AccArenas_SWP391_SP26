@@ -9,6 +9,7 @@ import { useState } from "react";
 import { formatCurrency } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import { isCustomer } from "@/lib/roleUtils";
+import FavoriteButton from "@/components/ui/FavoriteButton";
 
 export default function GameAccountDetailPage() {
     const params = useParams();
@@ -78,6 +79,7 @@ export default function GameAccountDetailPage() {
                         {/* Left: Images */}
                         <div className="lg:col-span-12 xl:col-span-5 p-6 bg-gray-50/50">
                             <div className="aspect-[4/3] relative rounded-2xl overflow-hidden shadow-md border-2 border-white mb-4">
+                                <FavoriteButton gameAccountId={account.id} className="absolute top-3 right-3 z-10 bg-white/90 shadow-sm backdrop-blur-md hover:scale-105" />
                                 <img
                                     src={currentImage}
                                     alt={account.accountName}
@@ -199,7 +201,10 @@ export default function GameAccountDetailPage() {
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                             {related.map((rel: any) => (
                                 <Link href={`/game-accounts/${rel.id}`} key={rel.id} className="group">
-                                    <div className="bg-white rounded-[1.5rem] border border-gray-100 overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                                    <div className="bg-white rounded-[1.5rem] border border-gray-100 overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 relative">
+                                        <div className="absolute top-2 left-2 z-10">
+                                            <FavoriteButton gameAccountId={rel.id} className="bg-white/90 shadow-sm backdrop-blur-md scale-75 origin-top-left hover:scale-90" />
+                                        </div>
                                         <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
                                             <img
                                                 src={rel.images?.[0] || 'https://hoanghamobile.com/tin-tuc/wp-content/uploads/2024/06/game-wallpaper-4k-31.jpg'}

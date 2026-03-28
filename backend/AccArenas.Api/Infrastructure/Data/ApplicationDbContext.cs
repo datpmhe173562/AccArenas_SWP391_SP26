@@ -23,10 +23,33 @@ namespace AccArenas.Api.Infrastructure.Data
         public DbSet<Category> Categories => Set<Category>();
         public DbSet<Feedback> Feedbacks => Set<Feedback>();
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+        public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+        public DbSet<Favorite> Favorites => Set<Favorite>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+
+            builder
+                .Entity<Favorite>()
+                .HasOne(f => f.User)
+                .WithMany()
+                .HasForeignKey(f => f.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder
+                .Entity<Favorite>()
+                .HasOne(f => f.GameAccount)
+                .WithMany()
+                .HasForeignKey(f => f.GameAccountId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder
+                .Entity<AuditLog>()
+                .HasOne(a => a.User)
+                .WithMany()
+                .HasForeignKey(a => a.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             builder
                 .Entity<OrderItem>()
