@@ -22,6 +22,7 @@ const menuItems: MenuItem[] = [
   { label: "Quản lý người dùng", href: "/admin/users" },
   { label: "Quản lý Role", href: "/admin/roles" },
   { label: "Gán quyền", href: "/admin/assign-role" },
+  { label: "Nhật ký hoạt động", href: "/admin/audit-logs" },
 ];
 
 export default function AdminLayout({ children }: AdminLayoutProps) {

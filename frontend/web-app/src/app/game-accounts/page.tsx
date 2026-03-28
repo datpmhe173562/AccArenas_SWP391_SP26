@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import FavoriteButton from "@/components/ui/FavoriteButton";
 import { useSearchGameAccounts } from "@/hooks/useGameAccounts";
 import { useAllCategories } from "@/hooks/useCategories";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -195,12 +196,19 @@ function GameAccountsContent() {
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                         {accountsResult?.items?.map((account: any) => (
                                             <Link href={`/game-accounts/${account.id}`} key={account.id} className="group">
-                                                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 transform group-hover:-translate-y-1">
+                                                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 transform group-hover:-translate-y-1 relative">
+                                                    
+                                                    {/* Favorite Button Overlay */}
+                                                    <div className="absolute top-2 left-2 z-10">
+                                                        <FavoriteButton gameAccountId={account.id} className="bg-white/90 shadow-sm backdrop-blur-md hover:scale-105" />
+                                                    </div>
+
                                                     <div className="w-full h-48 bg-gray-200 relative">
                                                         {account.images && account.images.length > 0 ? (
                                                             // eslint-disable-next-line @next/next/no-img-element
                                                             <img
                                                                 src={account.images[0]}
+
                                                                 alt={account.accountName}
                                                                 className="w-full h-full object-cover"
                                                                 onError={(e) => {

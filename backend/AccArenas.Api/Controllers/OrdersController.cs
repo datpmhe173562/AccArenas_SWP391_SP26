@@ -19,16 +19,19 @@ namespace AccArenas.Api.Controllers
         private readonly IUnitOfWork _unitOfWork;
         private readonly IVnPayService _vnPayService;
         private readonly IConfiguration _configuration;
+        private readonly IAuditLogService _auditLogService;
 
         public OrdersController(
             IUnitOfWork unitOfWork,
             IVnPayService vnPayService,
-            IConfiguration configuration
+            IConfiguration configuration,
+            IAuditLogService auditLogService
         )
         {
             _unitOfWork = unitOfWork;
             _vnPayService = vnPayService;
             _configuration = configuration;
+            _auditLogService = auditLogService;
         }
 
         [HttpGet("my-orders")]
@@ -240,6 +243,8 @@ namespace AccArenas.Api.Controllers
             await _unitOfWork.Orders.AddAsync(order);
             await _unitOfWork.SaveChangesAsync();
 
+            await _auditLogService.LogActionAsync(userId, "Create", "Order", order.Id.ToString(), $"Customer created order for {totalAmount} VND");
+
             // 4. Generate VNPay URL
             var paymentReq = new PaymentInformationRequest
             {
@@ -313,6 +318,8 @@ namespace AccArenas.Api.Controllers
             }
 
             await _unitOfWork.SaveChangesAsync();
+
+            await _auditLogService.LogActionAsync(userId, "Cancel", "Order", order.Id.ToString(), $"Customer cancelled order");
 
             return Ok(
                 new ApiResponse<string>

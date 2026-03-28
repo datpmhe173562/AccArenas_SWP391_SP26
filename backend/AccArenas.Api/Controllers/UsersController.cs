@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using AccArenas.Api.Application.DTOs;
 using AccArenas.Api.Application.Exceptions;
 using AccArenas.Api.Application.Services;
+using AccArenas.Api.Domain.Interfaces;
 using AccArenas.Api.Domain.Models;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
@@ -24,18 +25,21 @@ namespace AccArenas.Api.Controllers
         private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly IMapper _mapper;
         private readonly ILogger<UsersController> _logger;
+        private readonly IAuditLogService _auditLogService;
 
         public UsersController(
             UserManager<ApplicationUser> userManager,
             RoleManager<ApplicationRole> roleManager,
             IMapper mapper,
-            ILogger<UsersController> logger
+            ILogger<UsersController> logger,
+            IAuditLogService auditLogService
         )
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _mapper = mapper;
             _logger = logger;
+            _auditLogService = auditLogService;
         }
 
         [HttpGet]
@@ -198,6 +202,10 @@ namespace AccArenas.Api.Controllers
             };
 
             _logger.LogInformation("[CreateUser] User creation completed for {UserName}", user.UserName);
+            
+            var adminId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            await _auditLogService.LogActionAsync(adminId, "Create", "User", user.Id.ToString(), $"Created user {user.UserName} roles: {string.Join(", ", request.Roles)}");
+
             return CreatedAtAction(nameof(GetUser), new { id = user.Id }, userDto);
         }
 
@@ -246,6 +254,9 @@ namespace AccArenas.Api.Controllers
                 _logger.LogInformation("[UpdateUser] Password updated successfully");
             }
 
+            var adminId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            await _auditLogService.LogActionAsync(adminId, "Update", "User", id.ToString(), $"Updated user {user.UserName}");
+
             _logger.LogInformation("[UpdateUser] User update completed for {UserName}", user.UserName);
             return NoContent();
         }
@@ -266,6 +277,9 @@ namespace AccArenas.Api.Controllers
                 var errors = result.Errors.ToDictionary(e => e.Code, e => e.Description);
                 throw new ApiException("Failed to delete user", HttpStatusCode.BadRequest, errors);
             }
+
+            var adminId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            await _auditLogService.LogActionAsync(adminId, "Delete", "User", id.ToString(), $"Deleted user {user.UserName}");
 
             return NoContent();
         }
@@ -299,6 +313,9 @@ namespace AccArenas.Api.Controllers
                 throw new ApiException("Failed to assign role", HttpStatusCode.BadRequest, errors);
             }
 
+            var adminId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            await _auditLogService.LogActionAsync(adminId, "AssignRole", "User", id.ToString(), $"Assigned role {request.RoleName} to {user.UserName}");
+
             return Ok($"Role '{request.RoleName}' assigned to user successfully");
         }
 
@@ -324,6 +341,9 @@ namespace AccArenas.Api.Controllers
                 var errors = result.Errors.ToDictionary(e => e.Code, e => e.Description);
                 throw new ApiException("Failed to remove role", HttpStatusCode.BadRequest, errors);
             }
+
+            var adminId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            await _auditLogService.LogActionAsync(adminId, "RemoveRole", "User", id.ToString(), $"Removed role {request.RoleName} from {user.UserName}");
 
             return Ok($"Role '{request.RoleName}' removed from user successfully");
         }
@@ -358,6 +378,9 @@ namespace AccArenas.Api.Controllers
                 var errors = result.Errors.ToDictionary(e => e.Code, e => e.Description);
                 throw new ApiException("Failed to toggle user status", HttpStatusCode.BadRequest, errors);
             }
+
+            var adminId = Guid.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
+            await _auditLogService.LogActionAsync(adminId, user.IsActive ? "Activate" : "Deactivate", "User", id.ToString(), $"Status of {user.UserName} changed to {user.IsActive}");
 
             return Ok(new { IsActive = user.IsActive });
         }
