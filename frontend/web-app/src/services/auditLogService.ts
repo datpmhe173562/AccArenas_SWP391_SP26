@@ -2,16 +2,13 @@ import { axiosInstance } from '@/lib/axios';
 
 export interface AuditLogDto {
     id: string;
+    userId: string;
+    userName?: string;
     action: string;
     entityType: string;
     entityId: string;
     details: string;
     createdAt: string;
-    user: {
-        id: string;
-        userName: string;
-        fullName?: string;
-    } | null;
 }
 
 export interface AuditLogResponse {

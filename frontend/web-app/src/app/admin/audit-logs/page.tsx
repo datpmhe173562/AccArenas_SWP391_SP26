@@ -130,7 +130,7 @@ export default function AuditLogsPage() {
                                 {logs.map(log => (
                                     <tr key={log.id}>
                                         <td className="px-6 py-4 text-sm text-gray-900">{format(new Date(log.createdAt), "HH:mm dd/MM/yyyy")}</td>
-                                        <td className="px-6 py-4 text-sm text-gray-900">{log.user?.userName || "N/A"}</td>
+                                        <td className="px-6 py-4 text-sm text-gray-900">{log.userName || "N/A"}</td>
                                         <td className="px-6 py-4 text-sm text-gray-900 font-semibold">{log.action}</td>
                                         <td className="px-6 py-4 text-sm text-gray-500">{log.entityType} ({log.entityId.substring(0,8)}...)</td>
                                         <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate" title={log.details}>{log.details}</td>
